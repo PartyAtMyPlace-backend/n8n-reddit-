@@ -1,0 +1,2776 @@
+[Weekly Content (GSC → AI → Webflow Draft → Mail) (66).json](https://github.com/user-attachments/files/23412044/Weekly.Content.GSC.AI.Webflow.Draft.Mail.66.json)
+{
+  "name": "Weekly Content (GSC → AI → Webflow Draft → Mail)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "### Trigger & Init\nStart van de run + basisconfig (host/dates).",
+        "height": 324,
+        "width": 664,
+        "color": 8
+      },
+      "id": "d6230feb-0326-4374-a68e-64502470cd01",
+      "name": "Sticky: Trigger & Init",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2656,
+        1088
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Sources (Sitemap, GSC, Webflow samples)\nBrondata ophalen en normaliseren.",
+        "height": 1324,
+        "width": 1072,
+        "color": 5
+      },
+      "id": "c7901702-e0ae-4505-82b4-a32c53cf6555",
+      "name": "Sticky: Sources (Sitemap, GSC, Webflow samples)",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1920,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Corpus + Brief + Mode\nFlatten corpus, hash/rapport, brief & mode-pick.",
+        "height": 1128,
+        "width": 1064,
+        "color": 2
+      },
+      "id": "15df1af8-ea7d-4918-bff7-383724ce3960",
+      "name": "Sticky: Corpus + Brief + Mode",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1072,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### BLOG Corpus Paging\nWebflow paging/statistieken + collect.",
+        "height": 976,
+        "width": 1392,
+        "color": 6
+      },
+      "id": "14d38266-c54e-44e1-a60c-b1c693227ab2",
+      "name": "Sticky: BLOG Corpus Paging",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### LP Generation\nPrompt → Generate → Parse → Guards → Inject → Validate → Hash → Dedup → Webflow.",
+        "height": 672,
+        "width": 3584,
+        "color": 6
+      },
+      "id": "c0205a44-7706-44d3-9a6f-c139d04a1645",
+      "name": "Sticky: LP Generation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2656,
+        1424
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Post/Export\nExecutie export/log.",
+        "height": 260,
+        "width": 472,
+        "color": 4
+      },
+      "id": "2042e246-3fc4-4b8f-90f1-99403505a2db",
+      "name": "Sticky: Post/Export",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3232,
+        288
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2576,
+        1184
+      ],
+      "id": "8b26551b-48a3-4846-957c-2446528d3e5c",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dbd5b58b-6dae-401f-98a4-30ef2784557e",
+              "name": "base_url",
+              "value": "={{$env.BASE_URL}}",
+              "type": "string"
+            },
+            {
+              "id": "8ea61400-f57f-4c4e-9c49-631dec2372ad",
+              "name": "webflow_site_id",
+              "value": "={{$env.WEBFLOW_SITE_ID}}",
+              "type": "string"
+            },
+            {
+              "id": "5aa3657a-40ee-468c-b53a-289210c6eaaa",
+              "name": "col_blog",
+              "value": "={{$env.WEBFLOW_COLLECTION_ID_BLOG}}",
+              "type": "string"
+            },
+            {
+              "id": "f19a9bf5-c524-405e-848e-0a47d6a34915",
+              "name": "col_lp",
+              "value": "={{$env.WEBFLOW_COLLECTION_ID_LP}}",
+              "type": "string"
+            },
+            {
+              "id": "165d7db0-6ef1-4b55-ad76-ce35354ea589",
+              "name": "autopublish",
+              "value": "={{$env.AUTOPUBLISH}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2368,
+        1184
+      ],
+      "id": "a0262337-71a7-429f-98ef-d49f14842c86",
+      "name": "Init"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ✅ Gebruik n8n's ingebouwde Luxon objecten ($now / $today)\nconst now = $now.setZone('Europe/Amsterdam');   // verander zone indien nodig\n\n// Persistente workflow-data (alleen in \"echte\" runs, niet bij handmatige tests)\nconst wf = $getWorkflowStaticData('global');\n\n// Eén run_id per dag behouden (pas aan naar smaak)\nif (!wf.runId || wf.lastRunAt !== now.toISODate()) {\n  // Node 18+ heeft meestal crypto.randomUUID; zo niet, fallback:\n  const newId = (globalThis.crypto?.randomUUID?.())\n    ? globalThis.crypto.randomUUID()\n    : `${now.toMillis()}-${Math.floor(Math.random() * 1e9)}`;\n  wf.runId = newId;\n  wf.lastRunAt = now.toISODate();\n}\n\n// Host uit je base_url halen (zonder protocol/poorten)\nfunction extractHost(u) {\n  try { return new URL(u).host; }\n  catch { return (u || '').replace(/^https?:\\/\\//,'').split('/')[0]; }\n}\n\nconst baseUrl = $json.base_url || $vars?.BASE_URL || '';\nconst host = extractHost(baseUrl);\n\n// Handige datumbereiken (28 dagen huidig + vorige 28 dagen)\nconst gscEnd       = now.toISODate();\nconst gscStart     = now.minus({ days: 28 }).toISODate();\nconst gscPrevEnd   = now.minus({ days: 28 }).toISODate();\nconst gscPrevStart = now.minus({ days: 56 }).toISODate();\n\nreturn [\n  {\n    json: {\n      // laat oorspronkelijke input intact als je die doorgeeft\n      ...$json,\n      host,\n      run_id: wf.runId,\n      tz: now.zoneName,\n      today_iso: now.toISODate(),\n      gscStart,\n      gscEnd,\n      gscPrevStart,\n      gscPrevEnd,\n    },\n  },\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2160,
+        1184
+      ],
+      "id": "c4ea831b-821e-45c6-bb6e-76fe7fb9fd06",
+      "name": "Host & Dates (Function)"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.webflow.com/v2/collections/{{$json.col_blog}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.WEBFLOW_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1856,
+        784
+      ],
+      "id": "5f5f286c-b483-492a-9001-55f60a145d26",
+      "name": "Webflow Get Collection (Blog)"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.webflow.com/v2/collections/{{$json.col_lp}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.WEBFLOW_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1856,
+        944
+      ],
+      "id": "92714624-7868-46ac-88f8-f8302fa98b4c",
+      "name": "Webflow Get Collection (LP)"
+    },
+    {
+      "parameters": {
+        "url": "={{$env.BASE_URL}}/sitemap.xml",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1856,
+        1104
+      ],
+      "id": "5138fa14-c5fc-4fb9-9454-970d74b8a7cb",
+      "name": "GET sitemap.xml",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/webmasters/v3/sites/{{ encodeURIComponent($env.BASE_URL) }}/searchAnalytics/query",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"startDate\": \"{{$json.gscStart}}\",\n  \"endDate\": \"{{$json.gscEnd}}\",\n  \"dimensions\": [\"page\"],\n  \"type\": \"web\",\n  \"aggregationType\": \"auto\",\n  \"rowLimit\": {{$json.rowLimit ?? 25000}},\n  \"startRow\":  {{$json.startRow  ?? 0}}\n}\n",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1856,
+        1264
+      ],
+      "id": "8213887a-2497-4aa7-ba14-0a6134bf6c9e",
+      "name": "GSC pages (Search Analytics)",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googleOAuth2Api": {
+          "id": "PQW90Lgz76lrWuKU",
+          "name": "Google account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://www.googleapis.com/customsearch/v1\n",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "={{$env.GOOGLE_CSE_KEY}}"
+            },
+            {
+              "name": "cx",
+              "value": "={{$env.GOOGLE_CSE_CX}}"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.host ? ('site:' + $json.host) : 'site:partyatmyplace.nl' }}"
+            },
+            {
+              "name": "num",
+              "value": "10"
+            },
+            {
+              "name": "hl",
+              "value": "nl"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1856,
+        1424
+      ],
+      "id": "1a2fd914-0bad-4cdc-902e-36bf11a318db",
+      "name": "Google CSE (site: generic)",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/webmasters/v3/sites/{{ encodeURIComponent($env.BASE_URL) }}/searchAnalytics/query",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"startDate\": \"{{$json.gscStart}}\",\n  \"endDate\": \"{{$json.gscEnd}}\",\n  \"dimensions\": [\"query\"],\n  \"type\": \"web\",\n  \"aggregationType\": \"auto\",\n  \"rowLimit\": {{$json.rowLimit ?? 25000}},\n  \"startRow\":  {{$json.startRow  ?? 0}}\n}\n",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1856,
+        1584
+      ],
+      "id": "1e2bef39-468b-4028-b2c8-e327aaee73dd",
+      "name": "GSC queries (Search Analytics)",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googleOAuth2Api": {
+          "id": "PQW90Lgz76lrWuKU",
+          "name": "Google account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.webflow.com/v2/collections/{{$json.id}}/items?limit=5&sortBy=lastPublished&sortOrder=desc\n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.WEBFLOW_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1520,
+        784
+      ],
+      "id": "2558f365-4f0e-4a93-a3ad-86ac0ce5a2a1",
+      "name": "Webflow List Items (Blog, sample)"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.webflow.com/v2/collections/{{$json.id}}/items?limit=5&sortBy=lastPublished&sortOrder=desc\n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.WEBFLOW_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1520,
+        944
+      ],
+      "id": "d9c57f0d-eb14-44d3-92ab-0b346bcddd79",
+      "name": "Webflow List Items (LP, sample)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Verwacht standaard sitemap index of urlset\nconst j = items[0].json;\nconst urls = [];\n\nfunction collect(locs) {\n  (locs || []).forEach((n) => {\n    if (typeof n === 'string') urls.push(n);\n    else if (n?._text) urls.push(n._text);\n  });\n}\n\n// urlset → url[].loc\nif (j?.urlset?.url) collect(j.urlset.url.map(u => u.loc));\n// sitemapindex → sitemap[].loc\nif (j?.sitemapindex?.sitemap) collect(j.sitemapindex.sitemap.map(s => s.loc));\n\nreturn urls\n  .filter(u => u && !u.includes('?'))          // optional: querystrings skippen\n  .map(u => ({ json: { url: u } }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1184,
+        1104
+      ],
+      "id": "8c5b70de-2061-4640-b2da-3b0b2cb09c9c",
+      "name": "Flatten Sitemap"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        -1520,
+        1104
+      ],
+      "id": "dc8dbe20-fcc1-4f17-9723-a33824b25c6c",
+      "name": "XML → JSON (Sitemap)"
+    },
+    {
+      "parameters": {
+        "numberInputs": 4
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1328,
+        560
+      ],
+      "id": "2eab932b-820e-4b20-8692-0c5b70a8c6fc",
+      "name": "Gate Webflow Context Ready"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -992,
+        1248
+      ],
+      "id": "3b9e06a3-5554-41ba-b6c9-17097efebd62",
+      "name": "Gate Link Pool Ready"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -416,
+        1248
+      ],
+      "id": "7c62d061-d76e-4565-b9bf-f338661e8ef5",
+      "name": "Final Gate"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $json.rows || [];\n// elke rij eruit als los item met vaste vorm\nreturn rows.map(r => ({\n  json: {\n    keys: r.keys,         // [page] (als je alleen \"page\" vraagt)\n    clicks: r.clicks,\n    impressions: r.impressions,\n    ctr: r.ctr,\n    position: r.position,\n    page: Array.isArray(r.keys) ? r.keys[0] : r.keys, // handig alias\n  },\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1520,
+        1264
+      ],
+      "id": "449b9055-1dd0-4792-ad69-f57a6ee0111b",
+      "name": "GSC pages — Split rows"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $json.rows || [];\nreturn rows.map(r => ({\n  json: {\n    keys: r.keys,           // [query]\n    query: Array.isArray(r.keys) ? r.keys[0] : r.keys,\n    clicks: r.clicks,\n    impressions: r.impressions,\n    ctr: r.ctr,\n    position: r.position,\n  },\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1520,
+        1584
+      ],
+      "id": "b87c2e28-ebb9-416e-b598-4514cc9a13cb",
+      "name": "GSC queries — Split rows"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ====== Haal ruwe rijen op uit de BRON-nodes, niet via $prevNode ======\nconst gscPages  = $items(\"GSC pages — Split rows\").map(i => i.json);        // elke rij heeft {page, clicks, impressions, position}\nconst gscQueries= $items(\"GSC queries — Split rows\").map(i => i.json);      // elke rij heeft {query, clicks, impressions, position}\nconst sitemap   = $items(\"Flatten Sitemap\").map(i => i.json.url);           // lijst van absolute URLs\n\n// Helpers: top queries/pages met drempel\nfunction topQueries(rows, minImpr=50){\n  return rows\n    .filter(r => (r.impressions||0) >= minImpr)\n    .sort((a,b)=> (b.impressions||0)-(a.impressions||0))\n    .slice(0,25)\n    .map(r=>r.query);\n}\nfunction topPages(rows, minImpr=50){\n  return rows\n    .filter(r => (r.impressions||0) >= minImpr)\n    .sort((a,b)=> (b.impressions||0)-(a.impressions||0))\n    .slice(0,25)\n    .map(r=>({ url:r.page, clicks:r.clicks, impressions:r.impressions, pos:r.position }));\n}\n\nconst brief = {\n  siteHost: $json.host,\n  date: $json.today_iso,\n  run_id: $json.run_id,\n  goals: [\n    \"Topical authority\",\n    \"Zoekintentie goed afdekken\",\n    \"Unieke invalshoek t.o.v. bestaande content\"\n  ],\n  seedQueries: topQueries(gscQueries),\n  seedPages: topPages(gscPages),\n  sitemapSample: sitemap.slice(0, 200),\n  brandTone: \"NL; professioneel; H2/H3; interne links; geen fluff\"\n};\n\n// >>> BELANGRIJK: correcte object-spread, geen punt vóór $json\nreturn [{ json: { ...$json, brief } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        1264
+      ],
+      "id": "2ae0b5c7-2a7e-46c8-9ab6-c4377e27085c",
+      "name": "Build Brief (Function)"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.webflow.com/v2/collections/{{$json.collectionId}}/items?limit={{$json.limit}}&offset={{$json.offset}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.WEBFLOW_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        128,
+        1104
+      ],
+      "id": "8c5189ce-d9da-49c5-a4ae-771779d2a92a",
+      "name": "Webflow List Items (BLOG) — HTTP",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    offset: 0,\n    limit: 100, // Webflow max\n    collectionId: $item(0).$node[\"Init\"].json.col_blog, // pak ID uit je Init-node\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        1104
+      ],
+      "id": "b52c8118-f62c-4f5f-8138-2f2c0109e199",
+      "name": "BLOG Loop Seed (Function)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $json.items || $json.data?.items || [];\nconst pagination = $json.pagination || $json.data?.pagination || {};\nconst limit  = pagination.limit  ?? $json.limit  ?? 100;\nconst offset = pagination.offset ?? $json.offset ?? 0;\nconst total  = pagination.total  ?? null;\n\n// ⬇️ Accu in workflow static data\nconst wf = $getWorkflowStaticData('global');\nwf._blogCorpus = (wf._blogCorpus || []).concat(items);\n\nreturn [{\n  json: {\n    ...$json,\n    _batchCount: items.length,\n    _nextOffset: offset + limit,\n    limit,\n    offset,\n    total,\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        1104
+      ],
+      "id": "33df02a9-2b2a-4687-b98b-f76d04007108",
+      "name": "BLOG Page Stats (Code)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "55dbf46d-a526-4dc5-ab16-1b537c3a255d",
+              "leftValue": "={{ $json._batchCount === ($json.limit || 100) }}",
+              "rightValue": "=",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        544,
+        1104
+      ],
+      "id": "549b8205-12f3-43f3-bce9-ad031d8967bf",
+      "name": "IF BLOG has more?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "20928f0d-f737-4adf-a686-2d8b3e5f5cef",
+              "name": "offset",
+              "value": "={{$json._nextOffset}}",
+              "type": "string"
+            },
+            {
+              "id": "ab311dc9-e389-46e5-b909-a938579ec36a",
+              "name": "limit",
+              "value": "={{$json.limit}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        784,
+        880
+      ],
+      "id": "4affd330-791d-42f9-b30c-ec22d9e2b01d",
+      "name": "Set: BLOG Pager Next"
+    },
+    {
+      "parameters": {
+        "jsCode": "const wf = $getWorkflowStaticData('global');\nconst corpus = wf._blogCorpus || [];\n// reset vóór return zodat dit item geen oude data doorgeeft in een volgende run\nwf._blogCorpus = [];\nreturn corpus.map(it => ({ json: it }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        1120
+      ],
+      "id": "4c25b667-e0ed-47ab-9f9a-368ed1eb0574",
+      "name": "BLOG Corpus (Collect)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===== Robust Corpus Flatten (Blog+LP) =====\n// Werkt betrouwbaar na een Merge én bij losse executie van de node.\n\n// 0) IDs van je collecties uit Init (handig om te scheiden blog vs lp)\nconst BLOG_ID = $node[\"Init\"]?.json?.col_blog;\nconst LP_ID   = $node[\"Init\"]?.json?.col_lp;\n\n// 1) Probeer expliciet items op te halen per node-naam\nlet blogItems = [];\nlet lpItems   = [];\n\ntry {\n  blogItems = ($items(\"BLOG Corpus (Collect)\") || []).map(i => i.json);\n} catch {}\ntry {\n  lpItems = ($items(\"LP Corpus (Collect)\") || []).map(i => i.json);\n} catch {}\n\n// 2) Als er nog niks is, pak dan de inkomende items (van de Merge)\nif (blogItems.length === 0 && lpItems.length === 0) {\n  const incoming = ($items() || []).map(i => i.json);\n  if (incoming.length) {\n    if (BLOG_ID || LP_ID) {\n      blogItems = incoming.filter(x => x?.collectionId === BLOG_ID);\n      lpItems   = incoming.filter(x => x?.collectionId === LP_ID);\n    } else {\n      // Best-effort heuristiek als IDs ontbreken\n      blogItems = incoming.filter(x => {\n        const fd = x?.fieldData || {};\n        return fd[\"post-body\"] || fd[\"contentHtml\"] || fd[\"body\"] || fd[\"richtext\"];\n      });\n      lpItems = incoming.filter(x => {\n        const fd = x?.fieldData || {};\n        return fd[\"subtext-1\"] || fd[\"subtitel-1\"] || fd[\"tagline-1\"];\n      });\n    }\n  }\n}\n\n// 3) Als laatste redmiddel: workflow static data (als je die in Page Stats opbouwt)\nif (blogItems.length === 0 && lpItems.length === 0) {\n  const wf = $getWorkflowStaticData('global');\n  if (Array.isArray(wf._blogCorpus)) blogItems = wf._blogCorpus;\n  if (Array.isArray(wf._lpCorpus))   lpItems   = wf._lpCorpus;\n}\n\n// ---- Helpers ----\nfunction pick(obj, ...keys) {\n  for (const k of keys) if (obj && obj[k] != null) return obj[k];\n  return undefined;\n}\nfunction safe(v) { if (v == null) return \"\"; if (typeof v === \"string\") return v; try { return String(v); } catch { return \"\"; } }\n\n// BLOG normalisatie: {id, collectionId, slug, title, html, type:\"blog\"}\nfunction normalizeBlog(raw) {\n  const fd = pick(raw, \"fieldData\") || {};\n  const id = pick(raw, \"id\");\n  const collectionId = pick(raw, \"collectionId\");\n  const slug  = pick(fd, \"slug\") || pick(raw, \"slug\") || \"\";\n  const title = pick(fd, \"name\", \"title\", \"post-title\") || pick(raw, \"name\", \"title\") || \"\";\n  const html  = pick(fd, \"post-body\", \"contentHtml\", \"body\", \"richtext\") ||\n                pick(raw, \"contentHtml\", \"body\") || \"\";\n  return { id, collectionId, slug, title, html, type: \"blog\" };\n}\n\n// LP normalisatie: bundel secties 1..4 naar één HTML\nfunction normalizeLp(raw) {\n  const fd = pick(raw, \"fieldData\") || {};\n  const id = pick(raw, \"id\");\n  const collectionId = pick(raw, \"collectionId\");\n  const slug  = pick(fd, \"slug\") || pick(raw, \"slug\") || \"\";\n  const title = pick(fd, \"name\", \"title\") || pick(raw, \"name\", \"title\") || \"\";\n\n  const sections = [];\n  for (let i = 1; i <= 4; i++) {\n    const subtitel = safe(fd[`subtitel-${i}`]);\n    const tagline  = safe(fd[`tagline-${i}`]);\n    const subtext  = safe(fd[`subtext-${i}`]); // vaak HTML\n    const img      = fd[`image-${i}`];         // {fileId,url,alt}\n\n    let html = \"\";\n    if (subtitel) html += `<h2>${subtitel}</h2>`;\n    if (tagline)  html += `<p class=\"tagline\">${tagline}</p>`;\n    if (subtext)  html += subtext;\n\n    if (img && (img.url || img.fileId)) {\n      const url = safe(img.url);\n      const alt = safe(img.alt);\n      if (url) html += `<figure><img src=\"${url}\" alt=\"${alt || \"\"}\"/></figure>`;\n    }\n    if (html) sections.push(`<section class=\"lp-section s${i}\">${html}</section>`);\n  }\n\n  return { id, collectionId, slug, title, html: sections.join(\"\\n\"), type: \"lp\" };\n}\n\n// ---- Normaliseer & combineer ----\nconst normalizedBlogs = blogItems.map(normalizeBlog);\nconst normalizedLps   = lpItems.map(normalizeLp);\n\nreturn [{ json: { corpus: [...normalizedBlogs, ...normalizedLps] } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        1264
+      ],
+      "id": "a030f50f-c3a9-453f-b7e4-9d73817a5a12",
+      "name": "Corpus Flatten (Blog+LP)"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    offset: 0,\n    limit: 100,\n    collectionId: $item(0).$node[\"Init\"].json.col_lp\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        1424
+      ],
+      "id": "6bd64122-45e1-4173-b7b5-b98e1a7ee98b",
+      "name": "LP Loop Seed (Function)"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.webflow.com/v2/collections/{{$json.collectionId}}/items?limit={{$json.limit}}&offset={{$json.offset}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.WEBFLOW_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        128,
+        1424
+      ],
+      "id": "66912fa0-4eaa-4c53-9257-3fad673db251",
+      "name": "Webflow List Items (LP) — HTTP",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $json.items || $json.data?.items || [];\nconst pagination = $json.pagination || $json.data?.pagination || {};\nconst limit  = pagination.limit  ?? $json.limit  ?? 100;\nconst offset = pagination.offset ?? $json.offset ?? 0;\nconst total  = pagination.total  ?? null;\n\nconst wf = $getWorkflowStaticData('global');\nwf._lpCorpus = (wf._lpCorpus || []).concat(items);\n\nreturn [{\n  json: {\n    ...$json,\n    _batchCount: items.length,\n    _nextOffset: offset + limit,\n    limit,\n    offset,\n    total,\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        1424
+      ],
+      "id": "51e420c5-13d4-4c0a-a2ce-149de3310054",
+      "name": "LP Page Stats (Code)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "55dbf46d-a526-4dc5-ab16-1b537c3a255d",
+              "leftValue": "={{ $json._batchCount === ($json.limit || 100) }}",
+              "rightValue": "=",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        544,
+        1424
+      ],
+      "id": "23da7ebc-c0e1-4058-9fc3-8bdb804bd774",
+      "name": "IF LP has more?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "20928f0d-f737-4adf-a686-2d8b3e5f5cef",
+              "name": "offset",
+              "value": "={{$json._nextOffset}}",
+              "type": "string"
+            },
+            {
+              "id": "ab311dc9-e389-46e5-b909-a938579ec36a",
+              "name": "limit",
+              "value": "={{$json.limit}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        784,
+        1600
+      ],
+      "id": "3b02a761-f7dc-4d4d-bc69-f4f5af0a0a0d",
+      "name": "Set: LP Pager Next"
+    },
+    {
+      "parameters": {
+        "jsCode": "const wf = $getWorkflowStaticData('global');\nconst corpus = wf._lpCorpus || [];\nwf._lpCorpus = [];\nreturn corpus.map(it => ({ json: it }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        1440
+      ],
+      "id": "c27d6b72-bc73-4c08-a589-e661b368a387",
+      "name": "LP Corpus (Collect)"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1088,
+        1264
+      ],
+      "id": "19dc1e12-2545-4572-acb3-d19e104a44b9",
+      "name": "Gate Corpus Ready (Merge)"
+    },
+    {
+      "parameters": {
+        "jsCode": "function normalizeText(t){\n  const noHtml = (t || \"\").replace(/<[^>]*>/g, \" \");\n  return noHtml.toLowerCase().replace(/\\s+/g,\" \").replace(/[^\\p{L}\\p{N}\\s]/gu,\"\").trim();\n}\nfunction hash(str){\n  let h = 2166136261 >>> 0;\n  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }\n  return (h >>> 0).toString(16);\n}\n\nconst corpus = $json.corpus || [];\nconst slugs = new Set();\nconst hashes = new Set();\nconst sampleBodies = [];   // <— nieuw\n\nfor (const it of corpus) {\n  if (it.slug) slugs.add(it.slug);\n  const key = normalizeText((it.title || \"\") + \" | \" + (it.html || \"\"));\n  if (key) hashes.add(hash(key));\n  if (it.html) {\n  // neem zowel blogs als LP's mee in de sample voor overlapvergelijking\n  sampleBodies.push(String(it.html));\n}\n}\n\n// optioneel: beperk sample voor performance\nconst _sampleBodies = sampleBodies.slice(0, 400);\n\nreturn [{\n  json: {\n    ...$json,\n    _corpus: corpus,\n    _corpusBySlug: Array.from(slugs),\n    _corpusByHash: Array.from(hashes),\n    _sampleBodies\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1504,
+        1264
+      ],
+      "id": "babfaf8a-7273-430f-ba36-4e4e255ce807",
+      "name": "Content Hash Corpus (Function)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const all = $json._corpus || [];\nconst blogs = all.filter(x => x.type === \"blog\").length;\nconst lps   = all.filter(x => x.type === \"lp\").length;\nreturn [{\n  json: {\n    total: all.length,\n    blogs,\n    lps,\n    slugs: ($json._corpusBySlug || []).length,\n    hashes: ($json._corpusByHash || []).length\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1504,
+        1088
+      ],
+      "id": "3093ed98-d656-45b0-acfb-fffbd7c0fb33",
+      "name": "Report Corpus (Code)"
+    },
+    {
+      "parameters": {
+        "numberInputs": 4
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1904,
+        1392
+      ],
+      "id": "f84ebc0a-e44a-446c-8234-fcf1cf237233",
+      "name": "Gate Create Ready (Merge)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build Prompt BLOG (Function) — SAFE & DEDUPED\nfunction safeNodeJson(name) { try { return $node[name].json || {}; } catch { return {}; } }\n\nconst brief   = safeNodeJson(\"Build Brief (Function)\").brief || {};\nconst choice  = safeNodeJson(\"Pick Focus (Code)\") || {};\nconst corpus  = safeNodeJson(\"Content Hash Corpus (Function)\") || {};\nconst titles  = safeNodeJson(\"Collect Existing Titles (BLOG)\") || {};\nconst rejects = safeNodeJson(\"Reject State (BLOG)\") || {};\nconst whitelist = $node[\"Normalize Allowed Links (Code)\"]?.json?.allowed_internal_links_rel || [];\n\nconst wf = $getWorkflowStaticData('global');\nconst recentLinks = Array.isArray(wf._recentLinks) ? wf._recentLinks.slice(0, 20) : [];\n\nconst modes = [\"case-study\",\"Q&A\",\"myth-busting\",\"stappenplan\",\"interview\",\"checklist\",\"vergelijking\",\"mini-gids\"];\nwf._blogAttempt = (wf._blogAttempt || 0) + 1;\nconst blogMode = modes[(wf._blogAttempt - 1) % modes.length];\nconst forbidPlaceInTitle = (wf._blogAttempt % 2 === 1);\n\nconst MAX_BODY_OVERLAP = 0.22;\nconst bannedStarts = [\"Wat is\",\"Waarom\",\"De Magie van\",\"De perfecte keuze\",\"Hoe werkt\",\"Alles over\",\"Complete gids\",\"Handleiding\",\"Ultieme\",\"Zo werkt\",\"Zo kies je\",\"X redenen\",\"X tips\"];\n\nconst system = `\nJe schrijft SEO-sterke NL BLOGS voor Party At My Place.\nSTRICT JSON:\n{\n \"title\": string,\n \"slug\": string-kebabcase,\n \"summary\": string (max 180),\n \"post-body\": string (HTML met <h2>/<p>/<ul>),\n \"tags\": string[] (3-6),\n \"internal_links\": string[] (1-2 relatieve paden die met \"/\" beginnen)\n}\nRegels:\n- Titel mag NIET beginnen met: ${bannedStarts.join(\", \")} (case-insensitief).\n- Gebruik \"focusQuery\" als hoofdonderwerp.\n- Variatiemodus: \"${blogMode}\" → structureer de blog volgens deze vorm.\n- Maak 4–6 H2’s; verbind elke H2 aan een subonderwerp verwant aan de focusquery.\n- Interne links: kies 1–2 URL’s ALLEEN uit 'allowed_internal_links' (relatieve paden). Geen absolute URL’s, geen UTM/anchors.\n- Vermijd links in 'recent_links' en link nooit naar jezelf (zelfde slug).\n- Uniek t.o.v. bestaande slugs + inhoud (wij checken overlap).\n- Kies óf thematisch óf lokaal en WISSEL AF:\n  ${forbidPlaceInTitle ? \"• In deze generatie is een PLAATSNAAM in de titel/slug VERBODEN.\" : \"• In deze generatie mag een plaatsnaam als het niet botst met bestaande/rejected slugs.\"}\n- Overlap-bewaking: als de overlap met bestaande content > ${MAX_BODY_OVERLAP} is,\n  kies direct een ANDERE invalshoek + publiek + scenario totdat de overlap < ${MAX_BODY_OVERLAP} daalt.\n`;\n\nconst user = {\n  intent: \"gen_blog\",\n  site: brief.siteHost || \"partyatmyplace.nl\",\n  focusQuery: choice.focusQuery || brief.seedQueries?.[0] || \"silent disco huren\",\n  audience: \"particulier NL\",\n  mode: blogMode,\n  forbidPlaceInTitle,\n  existingSlugs: Array.from(new Set(corpus._corpusBySlug || [])),\n  existingHashes: Array.from(new Set(corpus._corpusByHash || [])),\n  rejectedSlugs: Array.from(new Set(rejects.rejectedSlugs || [])),\n  allowed_internal_links: whitelist,\n  recent_links: recentLinks,\n  recentTitles: titles.existing_titles || [],\n  guardMessage: Array.isArray(rejects.closest) && rejects.closest.length\n    ? `De volgende bestaande posts lijken te veel op jouw concept: ${JSON.stringify(rejects.closest)}. Kies daarom een andere invalshoek + publiek + scenario en differentieer tot de overlap onder ${MAX_BODY_OVERLAP} daalt.`\n    : `Differentieer voldoende zodat overlap onder ${MAX_BODY_OVERLAP} blijft.`\n};\n\nreturn [{\n  json: {\n    model: \"openai/gpt-4o-mini\",\n    temperature: 0.9,\n    presence_penalty: 0.6,\n    frequency_penalty: 0.6,\n    max_tokens: 1400,\n    system, user\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2704,
+        1136
+      ],
+      "id": "b4b12a28-4a97-456c-82fa-d9fb6121cbbd",
+      "name": "Build Prompt BLOG (Function)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openRouterApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.OPENROUTER_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: $json.model,\n  temperature: $json.temperature,\n  // ➜ voeg deze twee door\n  presence_penalty: $json.presence_penalty,\n  frequency_penalty: $json.frequency_penalty,\n\n  max_tokens: $json.max_tokens,\n  messages: [\n    { role: 'system', content: $json.system },\n    { role: 'user',   content: JSON.stringify($json.user) }\n  ],\n  response_format: { type: 'json_object' }\n}) }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2928,
+        1136
+      ],
+      "id": "838a9f79-9824-4eff-89f4-1f666ddab3e0",
+      "name": "Generate BLOG (HTTP) — OpenRouter",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "openRouterApi": {
+          "id": "MQXFc4rVm71psp4P",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1) Pak ruwe modeloutput (OpenRouter)\nconst raw = $json?.choices?.[0]?.message?.content ?? \"\";\n\n// 2) Robuust JSON parsen (ook als er tekst omheen staat)\nfunction safeParse(s) {\n  try { return JSON.parse(s); }\n  catch {\n    const start = s.indexOf(\"{\");\n    const end   = s.lastIndexOf(\"}\");\n    if (start >= 0 && end > start) {\n      try { return JSON.parse(s.slice(start, end + 1)); } catch {}\n    }\n    throw new Error(\"BLOG AI-output geen JSON\");\n  }\n}\n\nconst obj = safeParse(raw);\n\n// 3) Normaliseren naar lijst met items\nlet items = [];\nif (Array.isArray(obj.variants) && obj.variants.length) {\n  items = obj.variants;\n} else if (obj && (obj.title || obj[\"post-body\"] || obj.slug)) {\n  // enkel object → maak er 1 item van\n  items = [obj];\n} else if (obj.data && (Array.isArray(obj.data) || obj.data.title || obj.data[\"post-body\"])) {\n  items = Array.isArray(obj.data) ? obj.data : [obj.data];\n}\n\n// 4) Guardrail\nif (!items.length) throw new Error(\"Geen geldige blog-variant gevonden in AI-output\");\n\n// 5) Zet defaults zodat downstream nodes niet struikelen\nreturn items.map(v => ({\n  json: {\n    title: v.title ?? \"\",\n    slug: v.slug ?? \"\",\n    summary: v.summary ?? \"\",\n    \"post-body\": v[\"post-body\"] ?? \"\",\n    tags: Array.isArray(v.tags) ? v.tags : [],\n    internal_links: Array.isArray(v.internal_links) ? v.internal_links : []\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3152,
+        1136
+      ],
+      "id": "9b1c01da-4a6a-4247-a6da-b5ee73324b52",
+      "name": "Parse BLOG JSON (Code)"
+    },
+    {
+      "parameters": {
+        "jsCode": "function slugify(s){\n  return String(s||\"\").toLowerCase()\n    .replace(/[^\\p{L}\\p{N}\\s-]/gu,\"\")\n    .replace(/\\s+/g,\"-\").replace(/-+/g,\"-\").replace(/^-|-$/g,\"\");\n}\nconst banned = [\"wat is\",\"waarom\",\"de magie van\",\"de perfecte keuze\",\"hoe werkt\",\"alles over\",\"complete gids\",\"handleiding\",\"ultieme\",\"zo werkt\",\"zo kies je\",\"x redenen\",\"x tips\"];\n\nconst v = { ...$json };\nconst errors = [];\nif (!v.title || v.title.length < 8) errors.push(\"title ontbreekt/te kort\");\nconst lower = v.title?.trim().toLowerCase() || \"\";\nif (banned.some(s => lower.startsWith(s))) errors.push(\"titel start met verboden frase\");\n\nv.slug = slugify(v.slug || v.title);\nif (!v.slug) errors.push(\"slug mislukt\");\nif (!v[\"post-body\"] || v[\"post-body\"].length < 400) errors.push(\"post-body te kort\");\nif (!Array.isArray(v.tags) || v.tags.length < 3) errors.push(\"tags ontbreken\");\n\nif (errors.length) throw new Error(\"BLOG validation: \" + errors.join(\"; \"));\nreturn [{ json: v }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4672,
+        1136
+      ],
+      "id": "4d620228-b8ed-4358-9443-7742096c201f",
+      "name": "Validate BLOG (Code)"
+    },
+    {
+      "parameters": {
+        "jsCode": "function stripHtml(x) {\n  return String(x || \"\")\n    .replace(/<[^>]*>/g, \" \")\n    .toLowerCase()\n    .replace(/\\s+/g, \" \")\n    .replace(/[^\\p{L}\\p{N}\\s]/gu, \"\")\n    .trim();\n}\nfunction fnv1a(str) {\n  let h = 2166136261 >>> 0;\n  for (let i = 0; i < str.length; i++) {\n    h ^= str.charCodeAt(i);\n    h = Math.imul(h, 16777619);\n  }\n  return (h >>> 0).toString(16);\n}\n\nconst v = $json;\nconst normalized = stripHtml(`${v.title || \"\"} | ${v[\"post-body\"] || \"\"}`);\nreturn [{ json: { ...v, content_hash: fnv1a(normalized) } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5152,
+        1136
+      ],
+      "id": "5bcd4895-fdc8-4803-8a96-4fcddd088261",
+      "name": "Hash BLOG (Function)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "79d93c12-9eed-4c96-a617-a09acc87a461",
+              "leftValue": "={{$node[\"Content Hash Corpus (Function)\"].json._corpusBySlug}}",
+              "rightValue": "={{ $json.slug }}",
+              "operator": {
+                "type": "array",
+                "operation": "notContains",
+                "rightType": "any"
+              }
+            },
+            {
+              "id": "261d8e08-3b23-40fc-b747-074017dc41d6",
+              "leftValue": "={{$node[\"Content Hash Corpus (Function)\"].json._corpusByHash}}",
+              "rightValue": "={{ $json.content_hash }}",
+              "operator": {
+                "type": "array",
+                "operation": "notContains",
+                "rightType": "any"
+              }
+            },
+            {
+              "id": "8997c467-6c5e-4007-a5b2-334b86cab06c",
+              "leftValue": "={{ Number($json._bodySimMax) }}",
+              "rightValue": 0.25,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        5392,
+        1136
+      ],
+      "id": "36a0e2a7-098c-4017-9899-b47f9df9d5e4",
+      "name": "Dedup BLOG (IF)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build Prompt LP (Function) — SAFE & DEDUPED (parallel aan BLOG)\n// Verbind: Gate Create Ready (Merge) -> deze node -> Generate LP (HTTP) — OpenRouter\n\n// ---------- Helpers ----------\nfunction readNode(name, path, fallback) {\n  try {\n    const ref = $node[name];\n    if (!ref || typeof ref.json === \"undefined\") return fallback;\n    const j = ref.json;\n    return path ? (j?.[path] ?? fallback) : (j ?? fallback);\n  } catch { return fallback; }\n}\nfunction toKebab(s) {\n  return String(s || \"\")\n    .normalize(\"NFKD\")\n    .replace(/[’']/g, \"\")\n    .replace(/[^a-zA-Z0-9\\s-]/g, \" \")\n    .trim()\n    .toLowerCase()\n    .replace(/\\s+/g, \"-\")\n    .replace(/-+/g, \"-\")\n    .replace(/^-|-$/g, \"\");\n}\n\n// ---------- Input-context ----------\nconst brief     = readNode(\"Build Brief (Function)\", \"brief\", {}) || {};\nconst pickLP    = Object.assign(\n  {},\n  readNode(\"Pick LP Mode (Function)\", null, {}),\n  readNode(\"Pick LP Mode (Code)\", null, {}),\n  readNode(\"Decide LP Target (Function)\", null, {})\n);\nconst corpus    = readNode(\"Content Hash Corpus (Function)\", null, {}) || {};\nconst titlesLP  = readNode(\"Collect Existing Titles (LP)\", null, {}) || {};\nconst whitelist = readNode(\"Normalize Allowed Links (Code)\", \"allowed_internal_links_rel\", []) || {};\nconst rejectsLP = readNode(\"Reject State (LP)\", null, {}) || {};\n\n// ---------- Workflow-state ----------\nconst wf = $getWorkflowStaticData(\"global\");\nconst recentLinks     = Array.isArray(wf._recentLinks) ? wf._recentLinks.slice(0, 20) : [];\nconst rejectedSlugsLP = Array.isArray(wf.rejectedSlugsLP) ? wf.rejectedSlugsLP : [];\n\n// ---------- Guards & regels ----------\nconst MAX_BODY_OVERLAP = 0.22;\nconst TITLE_UNIQUE_MIN = 0.84; // gebruik je ook downstream in IF\nconst bannedStarts = [\n  \"Wat is\",\"Waarom\",\"De Magie van\",\"De perfecte keuze\",\"Hoe werkt\",\n  \"Alles over\",\"Complete gids\",\"Handleiding\",\"Ultieme\",\"Zo werkt\",\n  \"Zo kies je\",\"X redenen\",\"X tips\"\n];\n\n// Fallback: stad detecteren uit primary_query als picker geen location zette\nconst CITY_RX = /\\b(arnhem|amsterdam|rotterdam|utrecht|eindhoven|groningen|tilburg|nijmegen|haarlem|breda|dordrecht|zwolle|enschede|maastricht|den haag|s gravenhage|s-hertogenbosch|den bosch|leeuwarden|alkmaar|apeldoorn|ijmuiden|amersfoort|zutphen|middelburg|venlo|ede|deventer|helmond|almere)\\b/i;\n\n// ---------- Primary query / location / slug ----------\nconst primary_query =\n  pickLP.primary_query\n  ?? (Array.isArray(brief.seedQueries) && brief.seedQueries[0])\n  ?? \"silent disco huren\";\n\nlet location = (pickLP.location || \"\").trim();\nif (!location) {\n  const m = String(primary_query).match(CITY_RX);\n  if (m) location = toKebab(m[1]);\n}\n\nconst lpSlugPrefix =\n  (pickLP.lpSlugPrefix && String(pickLP.lpSlugPrefix).trim())\n  || (brief.lpSlugPrefix && String(brief.lpSlugPrefix).trim())\n  || (brief.slugPrefixLP && String(brief.slugPrefixLP).trim())\n  || \"silent-disco-huren\";\n\nconst slug = location\n  ? `${toKebab(lpSlugPrefix)}-${toKebab(location)}`.replace(/--+/g,\"-\")\n  : toKebab(lpSlugPrefix);\n\n// LP mode (city/generic) + hint\nconst lpMode     = pickLP.lpMode || (location ? \"city\" : \"generic\");\nconst lpModeHint = pickLP.lpModeHint || (location ? \"Plaatsnaam-LP (picker/gsc)\" : \"Generieke LP\");\n\n// ---------- System-prompt ----------\nconst system = `\nJe schrijft SEO-sterke NL LANDINGSPAGINA'S (LP) voor Party At My Place.\nSTRICT JSON:\n{\n  \"name\": string,\n  \"slug\": string-kebabcase,\n  \"post-body\": string(HTML),\n  \"post-summary\": string,\n  \"tagline-1\": string, \"titel-1\": string, \"subtext-1\": HTML,\n  \"tagline-2\": string, \"subtitel-2\": string, \"subtext-2\": HTML,\n  \"tagline-3\": string, \"subtitel-3\": string, \"subtext-3\": HTML,\n  \"tagline-4\": string, \"subtitel-4\": string, \"subtext-4\": HTML,\n  \"tags\": string[], \"internal_links\": string[] // 1–2 relatieve paden\n}\nRegels:\n- Gebruik exact de meegegeven \"slug\" (verander 'slug' NIET).\n- Titels/subtitels mogen NIET starten met: ${bannedStarts.join(\", \")} (case-insensitief).\n- Gebruik \"primary_query\" als hoofdfocus (servicecontext = “silent disco huren”).\n- LOKAAL vs GENERIEK:\n  • Als 'location' leeg is → schrijf generiek, géén geforceerde plaatsnamen.\n  • Als 'location' gevuld is → verwerk die subtiel in H2’s/tekst (geen keyword stuffing of schreeuwerige koppen).\n- Maak 4 secties met verschillende subdoelen (informatie, toepassingen, bewijs/USP’s, conversie).\n- Interne links: kies 1–2 URL’s ALLEEN uit 'allowed_internal_links' (relatieve paden, geen UTM/anchors).\n  Vermijd 'recent_links' en link nooit naar jezelf (zelfde slug).\n- Uniek t.o.v. bestaande slugs + inhoud (downstream dedupe).\n  Houd tekstuele overlap onder ${MAX_BODY_OVERLAP}.\n- Zorg dat 'name' duidelijk afwijkt van bestaande LP-titels; wij scoren titelgelijkenis en accepteren pas bij < ${TITLE_UNIQUE_MIN}.\n- VEREIST: alle velden hierboven moeten bestaan en NIET leeg zijn.\n- VEREIST: \"subtitel-2/3/4\" hebben ≥ 8 tekens (geen lege string of korte filler).\n- Elke sectie heeft: tagline + subtitel + subtext. Geen sectie mag iets missen.\n`;\n\n// ---------- Guard-hint (optioneel: dichtstbijzijnde matches) ----------\nconst closest = Array.isArray(rejectsLP.closest) ? rejectsLP.closest : [];\nconst guardMessage = closest.length\n  ? `Eerdere concepten leken op: ${JSON.stringify(closest)}. Kies nu een andere invalshoek/publiek/scenario zodat overlap < ${MAX_BODY_OVERLAP} blijft.`\n  : `Differentieer voldoende zodat overlap onder ${MAX_BODY_OVERLAP} blijft.`;\n\n// ---------- User-payload ----------\nconst user = {\n  intent: \"gen_lp\",\n  site: brief.siteHost || \"partyatmyplace.nl\",\n\n  // Mode & locatie\n  lpMode, lpModeHint,\n  location,                       // \"\" => generiek\n  lpSlugPrefix,\n  slug,\n  force_slug: true,               // gebruikt door Parse LP JSON om slug te locken\n\n  // Querycontext\n  service: \"silent disco huren\",\n  primary_query,\n\n  // Links & anti-herhaling\n  allowed_internal_links: Array.isArray(whitelist) ? whitelist : [],\n  recent_links: recentLinks,\n\n  // Dedupe/corpus (draft + published)\n  existingSlugs:  Array.from(new Set(corpus._corpusBySlug || [])),\n  existingHashes: Array.from(new Set(corpus._corpusByHash || [])),\n  existingTitlesLP: titlesLP.titles || titlesLP.existing_titles || [],\n  rejectedSlugs: Array.from(new Set([\n    ...rejectedSlugsLP,\n    ...(Array.isArray(rejectsLP.rejectedSlugsLP) ? rejectsLP.rejectedSlugsLP : [])\n  ])),\n\n  // Guards\n  title_unique_min: TITLE_UNIQUE_MIN,\n  body_overlap_max: MAX_BODY_OVERLAP,\n  guardMessage\n};\n\n// ---------- Output voor HTTP (OpenRouter) ----------\nreturn [{\n  json: {\n    model: \"openai/gpt-4o-mini\",\n    temperature: 0.8,\n    presence_penalty: 0.5,\n    frequency_penalty: 0.5,\n    max_tokens: 1600,\n    system,\n    user\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2704,
+        1504
+      ],
+      "id": "e15bacbf-9200-4dc4-9f7b-e46abd986b46",
+      "name": "Build Prompt LP (Function)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openRouterApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.OPENROUTER_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: $json.model,\n  temperature: $json.temperature,\n  presence_penalty: $json.presence_penalty,\n  frequency_penalty: $json.frequency_penalty,\n  max_tokens: $json.max_tokens,\n  messages: [\n    { role: 'system', content: $json.system },\n    { role: 'user',   content: JSON.stringify($json.user) }\n  ],\n  response_format: { type: 'json_object' }\n}) }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2928,
+        1504
+      ],
+      "id": "51bc98a6-378b-4127-8605-7aba927ffe7b",
+      "name": "Generate LP (HTTP) — OpenRouter",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "openRouterApi": {
+          "id": "MQXFc4rVm71psp4P",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json?.choices?.[0]?.message?.content ?? \"\";\nfunction safeParse(s){ try{return JSON.parse(s);}catch{ const a=s.indexOf(\"{\"),b=s.lastIndexOf(\"}\"); if(a>=0&&b>a){try{return JSON.parse(s.slice(a,b+1));}catch{}} throw new Error(\"LP AI-output geen JSON\"); } }\nconst o = safeParse(raw);\nconst v = (Array.isArray(o?.variants) && o.variants.length) ? o.variants[0] : o;\nconst promptUser = $node[\"Build Prompt LP (Function)\"]?.json?.user || {};\n// helper om 'subtitel-*' → 'subtitle-*' te normaliseren\nconst pick = (obj, a, b) => obj?.[a] ?? obj?.[b] ?? \"\";\n\nreturn [{\n  json: {\n    name: v.name ?? \"\",\n    slug: v.slug && !promptUser.force_slug ? v.slug : (promptUser.slug || v.slug || \"\"),\n\n    \"post-body\":    v[\"post-body\"] ?? \"\",\n    \"post-summary\": v[\"post-summary\"] ?? \"\",\n\n    \"tagline-1\":  v[\"tagline-1\"]  ?? \"\",\n    \"titel-1\":    v[\"titel-1\"] ?? \"\",\n    \"subtext-1\":  v[\"subtext-1\"]  ?? \"\",\n\n    \"tagline-2\":  v[\"tagline-2\"]  ?? \"\",\n    \"subtitel-2\": pick(v,\"subtitle-2\",\"subtitel-2\"),\n    \"subtext-2\":  v[\"subtext-2\"]  ?? \"\",\n\n    \"tagline-3\":  v[\"tagline-3\"]  ?? \"\",\n    \"subtitel-3\": pick(v,\"subtitle-3\",\"subtitel-3\"),\n    \"subtext-3\":  v[\"subtext-3\"]  ?? \"\",\n\n    \"tagline-4\":  v[\"tagline-4\"]  ?? \"\",\n    \"subtitel-4\": pick(v,\"subtitle-4\",\"subtitel-4\"),\n    \"subtext-4\":  v[\"subtext-4\"]  ?? \"\",\n\n    internal_links: Array.isArray(v.internal_links) ? v.internal_links : []\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3152,
+        1504
+      ],
+      "id": "9eacba0b-f165-4f20-a2a4-9604e53ef7ba",
+      "name": "Parse LP JSON (Code)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Score Title Similarity (LP) — vergelijkt LP name met bestaande LP-titels\n\nfunction norm(s) {\n  return String(s || \"\")\n    .toLowerCase()\n    .normalize(\"NFKD\")\n    .replace(/[^\\p{L}\\p{N}\\s-]/gu, \"\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\n// simpele n-gram jaccard\nfunction shingles(s, k=3) {\n  const t = norm(s);\n  const out = new Set();\n  for (let i = 0; i <= Math.max(0, t.length - k); i++) out.add(t.slice(i, i + k));\n  return out;\n}\nfunction jacc(A, B) {\n  let inter = 0;\n  for (const x of A) if (B.has(x)) inter++;\n  const uni = A.size + B.size - inter;\n  return uni ? inter / uni : 0;\n}\n\n// 1) kandidaat uit LP: 'name' (fallback naar 'title' als dat ooit voorkomt)\nconst candTitle = ($json.name || $json.title || \"\").trim();\n\n// 2) bestaande LP-titels uit 'Collect Existing Titles (LP)'\nconst titles = $node[\"Collect Existing Titles (LP)\"]?.json?.titles || [];\n\n// 3) scoren\nconst S = shingles(candTitle, 3);\nlet maxSim = 0;\nlet nearest = \"\";\n\nfor (const t of titles) {\n  const sim = jacc(S, shingles(t, 3));\n  if (sim > maxSim) { maxSim = sim; nearest = t; }\n}\n\n// 4) anti-herhaling via simpele prefix-detectie (optioneel, gelijk aan blog-stijl)\nconst wf = $getWorkflowStaticData('global');\nwf._recentTitlePrefixes = Array.isArray(wf._recentTitlePrefixes) ? wf._recentTitlePrefixes : [];\nconst prefix = norm(candTitle).split(\" \").slice(0, 3).join(\" \");\nconst repeated = wf._recentTitlePrefixes.includes(prefix);\nif (repeated) maxSim = Math.max(maxSim, 0.85);   // forceer strengheid bij herhalen van sjabloon\nwf._recentTitlePrefixes.push(prefix);\nif (wf._recentTitlePrefixes.length > 4) wf._recentTitlePrefixes = wf._recentTitlePrefixes.slice(-4);\n\n// 5) output\nreturn [{\n  json: {\n    ...$json,\n    title_sim_max: Number(maxSim.toFixed(4)),\n    title_sim_nearest: nearest\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4176,
+        1504
+      ],
+      "id": "3116d804-7f6e-465c-8f00-60c1d28336af",
+      "name": "Score Title Similarity (Function) — voor LP-namen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Score Title Similarity (Function) — voor BLOG-namen\n// Vergelijkt $json.title met bestaande blogtitels en penaliseert herhaalde titel-prefixen.\n\n// ---------- helpers ----------\nfunction norm(s) {\n  return String(s || \"\")\n    .toLowerCase()\n    .normalize(\"NFKD\")\n    .replace(/[^\\p{L}\\p{N}\\s-]/gu, \"\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\nfunction shingles(s, k = 3) {\n  const t = norm(s);\n  const out = new Set();\n  for (let i = 0; i <= Math.max(0, t.length - k); i++) out.add(t.slice(i, i + k));\n  return out;\n}\nfunction jacc(A, B) {\n  let inter = 0;\n  for (const x of A) if (B.has(x)) inter++;\n  const uni = A.size + B.size - inter;\n  return uni ? inter / uni : 0;\n}\n\n// ---------- inputs ----------\nconst cand = String($json.title || $json.name || \"\");\nconst titles =\n  ($node[\"Collect Existing Titles (BLOG)\"]?.json?.existing_titles) ||\n  ($node[\"Collect Existing Titles (BLOG)\"]?.json?.titles) ||\n  [];\n\n// ---------- similarity ----------\nconst S = shingles(cand, 3);\nlet maxSim = 0;\nlet nearest = \"\";\nfor (const t of titles) {\n  const sim = jacc(S, shingles(t, 3));\n  if (sim > maxSim) { maxSim = sim; nearest = t; }\n}\n\n// ---------- template/herhaal-penalty ----------\nconst wf = $getWorkflowStaticData(\"global\");\nconst prefix = norm(cand).split(\" \").slice(0, 2).join(\" \"); // eerste 2 woorden als 'sjabloon'\n\n// NIET resetten; alleen initialiseren als nodig\nwf._recentTitlePrefixes = Array.isArray(wf._recentTitlePrefixes) ? wf._recentTitlePrefixes : [];\n\n// hoeveel keer zagen we exact dit prefix al?\nconst repeats = prefix ? wf._recentTitlePrefixes.filter(p => p === prefix).length : 0;\n\n// al bij 1 herhaling forceren we een hoge overeenkomstdrempel\nif (repeats >= 1) maxSim = Math.max(maxSim, 0.88);\n\n// nieuw prefix registreren en geschiedenis truncaten\nif (prefix) wf._recentTitlePrefixes.push(prefix);\nif (wf._recentTitlePrefixes.length > 10) {\n  wf._recentTitlePrefixes = wf._recentTitlePrefixes.slice(-10);\n}\n\n// ---------- output ----------\nreturn [{\n  json: {\n    ...$json,\n    title_sim_max: Number(maxSim.toFixed(4)),\n    title_sim_nearest: nearest,\n    _title_prefix: prefix,\n    _title_prefix_repeats: repeats,\n    _title_prefix_repeated: repeats >= 1\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3680,
+        1136
+      ],
+      "id": "7be1e8d2-d79f-4440-a140-38d78ea2bc72",
+      "name": "Score Title Similarity (Function) — voor BLOG-namen"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect Existing Titles (LP)  — VOLLEDIGE CODE (VERVANG)\nconst items = $items(\"LP Corpus (Collect)\") || [];  // LET OP: LP, niet BLOG\nconst titles = [];\nfor (const it of items) {\n  const arr = it.json?.data || it.json || [];\n  for (const row of (Array.isArray(arr) ? arr : [arr])) {\n    const t = row?.fieldData?.name || row?.name || row?.title || \"\";\n    if (t) titles.push(t);\n  }\n}\nreturn [{ json: { titles } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        1824
+      ],
+      "id": "552a595f-e2c9-4cb0-bdc2-6611b5a00207",
+      "name": "Collect Existing Titles (LP)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Haal alle items op die uit de node \"BLOG Corpus (Collect)\" komen\n// (die node geeft een lijst Webflow items terug met fieldData.name)\nconst corpusItems = $items(\"BLOG Corpus (Collect)\") || [];\n\n// Pak 'fieldData.name' (fallback naar 'name' als die anders heet)\nconst titles = corpusItems\n  .map(i => i.json?.fieldData?.name || i.json?.name || \"\")\n  .filter(Boolean);\n\n// Eén item terug met een array existing_titles\nreturn [{ json: { existing_titles: titles } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1504,
+        928
+      ],
+      "id": "152458e7-ac91-43e6-a6bb-1647778e3773",
+      "name": "Collect Existing Titles (BLOG)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "fc788e13-d109-45c5-a407-9a09ffe372fc",
+              "leftValue": "={{$json.title_sim_max}}",
+              "rightValue": 0.78,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3968,
+        1136
+      ],
+      "id": "75865e86-09e1-4685-85f6-ee82488888a7",
+      "name": "Title Unique Enough (BLOG)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "fc788e13-d109-45c5-a407-9a09ffe372fc",
+              "leftValue": "={{$json.title_sim_max}}",
+              "rightValue": 0.78,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4384,
+        1504
+      ],
+      "id": "2b2e43f1-06de-4c55-983b-cfc3d597ebe3",
+      "name": "Title Unique Enough (LP)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const v = {...$json};\nconst ranked = $node[\"Rank Internal Links (Function) (LP)\"]?.json?.ranked_internal_links || [];\nconst whitelistRel = $node[\"Normalize Allowed Links (Code)\"]?.json?.allowed_internal_links_rel || [];\n\nconst picked = [];\nfor (const r of ranked) {\n  const p = r?.path || r;\n  if (typeof p === \"string\" && p.startsWith(\"/\") && !picked.includes(p)) picked.push(p);\n  if (picked.length >= 2) break;\n}\nif (picked.length < 2) {\n  for (const p of whitelistRel) {\n    if (typeof p === \"string\" && p.startsWith(\"/\") && !picked.includes(p)) picked.push(p);\n    if (picked.length >= 2) break;\n  }\n}\nfunction labelFromPath(p){ const last = String(p).split(\"/\").filter(Boolean).pop()||\"\"; return last.replace(/-/g,\" \")||p; }\nconst items = picked.map(p => `<li><a href=\"${p}\">${labelFromPath(p)}</a></li>`).join(\"\");\nv[\"subtext-4\"] = (v[\"subtext-4\"]||\"\") + `\\n<section class=\"internal-links\"><h2>Lees ook</h2><ul>${items}</ul></section>`;\nreturn [{ json: v }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4656,
+        1504
+      ],
+      "id": "a1b21625-9a36-4b6b-8504-13393179e17e",
+      "name": "Enforce & Inject Links (Function) (LP)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Enforce & Inject Links (Function) (BLOG) — SAFE & ROBUST\n\n// 1) Inkomende blog veilig lezen\nconst blog = { ...$json };\nconst bodyIn = typeof blog[\"post-body\"] === \"string\" ? blog[\"post-body\"] : \"\";\n\n// 2) Bronnen voor linkkandidaten\nconst ranked    = $node[\"Rank Internal Links (Function) (BLOG)\"]?.json?.ranked_internal_links || [];\nconst whitelistRel = $node[\"Normalize Allowed Links (Code)\"]?.json?.allowed_internal_links_rel || [];\nconst base      = $node[\"Normalize Allowed Links (Code)\"]?.json?.base_url || \"https://www.partyatmyplace.nl\";\n\n// 3) hulpfuncties\nfunction isRel(p){ return typeof p === \"string\" && p.startsWith(\"/\"); }\nfunction toAbs(p){ return isRel(p) ? (base.replace(/\\/+$/,\"\") + p) : p; }\nfunction labelFromPath(p){\n  const last = String(p).split(\"/\").filter(Boolean).pop() || \"\";\n  return last.replace(/-/g, \" \") || p;\n}\n\n// 4) kies 2 links: eerst relevant (ranked), dan aanvullen uit whitelist\nconst picked = [];\nfor (const p of ranked) {\n  const path = p?.path || p;                // ranked kan {path, score,…} of string zijn\n  if (isRel(path) && !picked.includes(path)) picked.push(path);\n  if (picked.length >= 2) break;\n}\nif (picked.length < 2) {\n  for (const p of whitelistRel) {\n    if (isRel(p) && !picked.includes(p)) picked.push(p);\n    if (picked.length >= 2) break;\n  }\n}\n\n// 5) injecteer HTML-blok\nlet body = bodyIn;\nif (picked.length) {\n  // lichte ‘rotatie’: shuffle klein beetje per run\n  const seed = (Date.now() ^ (bodyIn.length || 0)) >>> 0;\n  function prng(n){ let x = seed; x ^= x<<13; x ^= x>>>17; x ^= x<<5; return Math.abs(x)%n; }\n  picked.sort(() => prng(1000) % 2 ? 1 : -1);\n\n  const items = picked.map(p => {\n    const href  = p;                         // relative href werkt prima in Webflow RTE\n    const label = labelFromPath(p);\n    return `<li><a href=\"${href}\">${label}</a></li>`;\n  }).join(\"\");\n\n  const block = `<h3>Gerelateerde pagina's</h3><ul>${items}</ul>`;\n  body = body.replace(/\\s*$/, \"\") + \"\\n\\n\" + block;\n}\n\n// 6) output\nreturn [{ json: { ...blog, \"post-body\": body } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4240,
+        1136
+      ],
+      "id": "a67ea48e-9e97-46bd-935a-a918cb17820f",
+      "name": "Enforce & Inject Links (Function) (BLOG)"
+    },
+    {
+      "parameters": {
+        "jsCode": "function slugify(s){\n  return String(s||\"\")\n    .toLowerCase()\n    .replace(/[^\\p{L}\\p{N}\\s-]/gu,\"\")\n    .replace(/\\s+/g,\"-\")\n    .replace(/-+/g,\"-\")\n    .replace(/^-|-$/g,\"\");\n}\n\n// HTML→plain voor lengtecheck\nfunction plainLen(html){\n  return String(html||\"\").replace(/<[^>]*>/g,\" \").replace(/\\s+/g,\" \").trim().length;\n}\n\nconst v = { ...$json };\nconst errors = [];\n\n// Vereiste velden aanwezig?\n[\"name\",\"subtext-1\",\"subtitel-2\",\"subtext-2\",\"subtitel-3\",\"subtext-3\",\"subtitel-4\",\"subtext-4\"]\n  .forEach(k => { if (!v[k]) errors.push(`${k} ontbreekt`); });\n\n// Minimale lengtes (realistisch)\nif ((v.name||\"\").trim().length < 8) errors.push(\"name te kort (<8)\");\n[\"subtitel-2\",\"subtitel-3\",\"subtitel-4\"].forEach(k => {\n  if ((v[k]||\"\").trim().length < 8) errors.push(`${k} te kort (<8)`);\n});\n[\"subtext-1\",\"subtext-2\",\"subtext-3\",\"subtext-4\"].forEach(k => {\n  if (plainLen(v[k]) < 80) errors.push(`${k} te kort (<80 tekens zonder HTML)`);\n});\n\n// Slug afleiden/valideren\nv.slug = slugify(v.slug || v.name);\nif (!v.slug) errors.push(\"slug mislukt\");\n\n// Klaar?\nif (errors.length) throw new Error(\"LP validation: \" + errors.join(\"; \"));\n\n// Geef gevalideerde payload terug\nreturn [{ json: v }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5088,
+        1504
+      ],
+      "id": "339be200-a349-4cf3-9ee4-2fcfb323337d",
+      "name": "Validate LP (Code)"
+    },
+    {
+      "parameters": {
+        "jsCode": "function strip(x){return String(x||\"\").replace(/<[^>]*>/g,\" \").toLowerCase().replace(/\\s+/g,\" \").replace(/[^\\p{L}\\p{N}\\s]/gu,\"\").trim();}\nfunction fnv1a(s){let h=2166136261>>>0; for(let i=0;i<s.length;i++){h^=s.charCodeAt(i); h=Math.imul(h,16777619);} return (h>>>0).toString(16);}\nconst v=$json;\nconst joined = [\n  v.name, v[\"subtext-1\"], v[\"subtext-2\"], v[\"subtext-3\"], v[\"subtext-4\"]\n].map(strip).join(\" | \");\nreturn [{ json: { ...v, content_hash: fnv1a(joined) } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5584,
+        1504
+      ],
+      "id": "c2b4fc6f-377a-4a94-85fe-810318dcca6f",
+      "name": "Hash LP (Function)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.webflow.com/v2/collections/{{$node[\"Init\"].json.col_blog}}/items",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.WEBFLOW_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  isDraft: true,\n  fieldData: {\n    name: $json.title,\n    slug: $json.slug,\n    \"post-body\": $json[\"post-body\"],\n    \"post-summary\": $json.summary || \"\",\n    \"category\": Array.isArray($json.tags) ? $json.tags.join(\", \") : \"\"\n  }\n}) }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        5600,
+        1056
+      ],
+      "id": "bb9bc84a-caca-4d3d-b2a0-3614f0847bbb",
+      "name": "Webflow Create Draft BLOG (HTTP)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.webflow.com/v2/collections/{{$node[\"Init\"].json.col_lp}}/items",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.WEBFLOW_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  isDraft: true,\n  fieldData: {\n    name:        $json.name,\n    slug:        $json.slug,\n\n    \"post-body\":    $json[\"post-body\"],\n    \"post-summary\": $json[\"post-summary\"],\n\n    \"tagline-1\":  $json[\"tagline-1\"]  || \"\",\n    \"titel-1\": $json[\"titel-1\"] || \"\",\n    \"subtext-1\":  $json[\"subtext-1\"],\n\n    \"tagline-2\":  $json[\"tagline-2\"]  || \"\",\n    \"subtitel-2\": $json[\"subtitel-2\"] || \"\",\n    \"subtext-2\":  $json[\"subtext-2\"],\n\n    \"tagline-3\":  $json[\"tagline-3\"]  || \"\",\n    \"subtitel-3\": $json[\"subtitel-3\"] || \"\",\n    \"subtext-3\":  $json[\"subtext-3\"],\n\n    \"tagline-4\":  $json[\"tagline-4\"]  || \"\",\n    \"subtitel-4\": $json[\"subtitel-4\"] || \"\",\n    \"subtext-4\":  $json[\"subtext-4\"]\n  }\n}) }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        6032,
+        1440
+      ],
+      "id": "98169f90-cea1-450d-81b4-657d49f278b2",
+      "name": "Webflow Create Draft LP (HTTP)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const brief = $node[\"Build Brief (Function)\"].json.brief || {};\nfunction pick(arr, seed=0){\n  if (!arr?.length) return null;\n  let x = seed>>>0;\n  for (let i=0;i<8;i++) x = (x*1664525 + 1013904223) >>> 0;\n  return arr[x % arr.length];\n}\nconst seed = (Number($node[\"Build Brief (Function)\"].json.run_id)||0) ^ (brief.seedQueries?.length||0);\nconst focusQuery = pick(brief.seedQueries, seed);\nconst focusPage  = pick(brief.seedPages,  seed);\n\nreturn [{\n  json: {\n    focusQuery,\n    focusPage,\n    allowedLinks: Array.isArray(brief.sitemapSample) ? brief.sitemapSample : []\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        1424
+      ],
+      "id": "1121949e-b16d-47a1-bd8c-c1030ade7f81",
+      "name": "Pick Focus (Code)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// strip alles + haal “Lees ook”-blok weg vóór vergelijk\nfunction strip(html){\n  return String(html||\"\")\n    .replace(/<section class=\"internal-links\">[\\s\\S]*?<\\/section>/i, \"\")\n    .replace(/<[^>]*>/g, \" \")\n    .toLowerCase()\n    .replace(/\\s+/g,\" \")\n    .trim();\n}\nfunction shingles(s, k=5){                                // k=5 maakt het inhoudelijker\n  const t = String(s||\"\");\n  const out = new Set();\n  for (let i=0;i<=Math.max(0,t.length-k);i++) out.add(t.slice(i,i+k));\n  return out;\n}\nfunction jacc(A,B){ let inter=0; for (const x of A) if (B.has(x)) inter++; const uni=A.size+B.size-inter; return uni? inter/uni : 0; }\n\nconst cand = strip($json[\"post-body\"]);\nconst samplesRaw = $node[\"Content Hash Corpus (Function)\"].json._sampleBodies || [];\nconst samples = samplesRaw.map(strip);\n\nconst S = shingles(cand, 5);\nconst scored = samples.map((body,i)=>({ idx:i, sim: Number(jacc(S, shingles(body,5)).toFixed(4)) }));\nscored.sort((a,b)=> b.sim-a.sim);\nconst top3 = scored.slice(0,3);\nreturn [{ json: { ...$json, _bodySimMax: top3[0]?.sim ?? 0, _closest: top3 } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4912,
+        1136
+      ],
+      "id": "8dffa3fb-8d23-4fc6-92d6-d1f91d613b11",
+      "name": "Body-overlap guard (Code)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "79d93c12-9eed-4c96-a617-a09acc87a461",
+              "leftValue": "={{$node[\"Content Hash Corpus (Function)\"].json._corpusBySlug}}",
+              "rightValue": "={{ $json.slug }}",
+              "operator": {
+                "type": "array",
+                "operation": "notContains",
+                "rightType": "any"
+              }
+            },
+            {
+              "id": "261d8e08-3b23-40fc-b747-074017dc41d6",
+              "leftValue": "={{$node[\"Content Hash Corpus (Function)\"].json._corpusByHash}}",
+              "rightValue": "={{ $json.content_hash }}",
+              "operator": {
+                "type": "array",
+                "operation": "notContains",
+                "rightType": "any"
+              }
+            },
+            {
+              "id": "68ab389a-8c7c-4af0-aa83-4ea957c9a61b",
+              "leftValue": "={{ Number($json._bodySimMax) }}",
+              "rightValue": 0.25,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        5808,
+        1504
+      ],
+      "id": "89c9e95f-34de-4e70-b1d3-03ab8624d333",
+      "name": "Dedup LP (IF)"
+    },
+    {
+      "parameters": {
+        "resource": "execution",
+        "operation": "get",
+        "executionId": "1664",
+        "options": {
+          "activeWorkflows": true
+        },
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        3296,
+        368
+      ],
+      "id": "9028d9ca-5245-48ba-b396-d93c60de767d",
+      "name": "Get an execution",
+      "credentials": {
+        "n8nApi": {
+          "id": "k67TtqD3hzacBVZD",
+          "name": "n8n account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        3504,
+        368
+      ],
+      "id": "2a09597a-e5df-4660-8da9-20a562021d6f",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Persistente lijst in workflow-­scope\nconst wf = $getWorkflowStaticData('global');\nwf.rejectedSlugs = Array.isArray(wf.rejectedSlugs) ? wf.rejectedSlugs : [];\n\n// Huidige kandidaat (slug of titel)\nconst cur = String($json.slug || $json.title || '').trim();\n\n// Merge met wat we al hadden\nconst out = Array.from(new Set([...wf.rejectedSlugs, cur].filter(Boolean)));\n\n// Bewaar en geef door\nwf.rejectedSlugs = out;\nreturn [{ json: { rejectedSlugs: out } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3776,
+        768
+      ],
+      "id": "d3251032-64f2-4e0f-bdda-515a2e8cc4c1",
+      "name": "Add to Rejects (BLOG)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// --- Sanitize BLOG HTML (Code) — Webflow-proof, behoud <a>/<ul>/<li> ---\n\nlet body = String($json[\"post-body\"] || \"\");\n\n// base voor absolute hrefs (komt uit je normalizer)\nconst base = $node[\"Normalize Allowed Links (Code)\"]?.json?.base_url\n          || \"https://www.partyatmyplace.nl\";\n\n// 1) Normaliseer whitespace/entiteiten die RTE's in de war brengen\nbody = body\n  .replace(/&nbsp;/gi, \" \")\n  .replace(/[\\u200B\\u200C\\u200D\\u00A0\\u2028\\u2029]/g, \" \");\n\n// 2) Verwijder inline styles en JS-event handlers (maar laat tekst en <a> staan)\nbody = body\n  .replace(/\\sstyle=\"[^\"]*\"/gi, \"\")\n  .replace(/\\son[a-z]+\\s*=\\s*\"[^\"]*\"/gi, \"\")\n  .replace(/\\son[a-z]+\\s*=\\s*'[^']*'/gi, \"\");\n\n// 3) Normaliseer <br> (optioneel)\nbody = body.replace(/\\s*<br\\s*\\/?>\\s*/gi, \"\\n\");\n\n// 4) Haal per ongeluk gewrapte <ul>/<ol> uit <p> zonder <li> te slopen\nbody = body\n  .replace(/<p>\\s*(<(?:ul|ol)\\b[^>]*>)/gi, \"$1\")\n  .replace(/(<\\/(?:ul|ol)>)\\s*<\\/p>/gi, \"$1\");\n\n// 5) BELANGRIJK: GEEN <p> in <li> forceren → dus NIETS doen hier.\n//    (Jouw injectie maakt al <li><a href=\"/...\">label</a></li> — dat is goed.)\n\n// 6) (Optioneel) zet relatieve hrefs om naar absolute; laat overige attributen intact\nbody = body.replace(/<a\\s+([^>]*?)href=\"([^\"]+)\"([^>]*)>/gi, (_, pre, href, post) => {\n  const abs = href.startsWith(\"/\") ? (base.replace(/\\/+$/,\"\") + href) : href;\n  return `<a ${pre}href=\"${abs}\"${post}>`;\n});\n\n// 7) Whitelist tags (laat <a>, <ul>, <li>, <p>, <h2>, <h3>, <ol> staan)\nbody = body.replace(/<(?!\\/?(h2|h3|p|ul|ol|li|a)\\b)[^>]*>/gi, \"\");\n\n// 8) Opruimen whitespace\nbody = body\n  .replace(/\\n{3,}/g, \"\\n\\n\")\n  .replace(/[ \\t]{2,}/g, \" \")\n  .trim();\n\nreturn [{ json: { ...$json, \"post-body\": body } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4448,
+        1136
+      ],
+      "id": "f2bcc9de-3cfc-4359-a11c-83b7ca03fb74",
+      "name": "Sanitize BLOG HTML (Code)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const wf = $getWorkflowStaticData('global');\nwf.rejectedSlugs = Array.isArray(wf.rejectedSlugs) ? wf.rejectedSlugs : [];\n\nconst fromIf = $json?.slug ? [$json.slug] : [];\nconst merged = Array.from(new Set([...wf.rejectedSlugs, ...fromIf]));\n\n// bewaar\nwf.rejectedSlugs = merged;\n\n// lees de laatst berekende closest lijst (kan ontbreken bij 1e poging)\nconst closest = Array.isArray(wf.closestBlogMatches) ? wf.closestBlogMatches : [];\n\nreturn [{\n  json: {\n    rejectedSlugs: merged,\n    closest\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        304
+      ],
+      "id": "4593e895-9f7c-4d8c-b58d-387bcd433a18",
+      "name": "Reject State (BLOG)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// — Pick Blog Mode (deterministisch per run) —\nconst modes = [\n  { key: \"case-study\",   hint: \"Mini-casestudy: context → aanpak → resultaat → tips.\" },\n  { key: \"Q&A\",          hint: \"Q&A-formaat: 6–8 vragen/antwoorden van doelgroep X.\" },\n  { key: \"myth-busting\", hint: \"Ontkracht 5–7 misvattingen met bewijs/voorbeelden.\" },\n  { key: \"stappenplan\",  hint: \"Handleiding in 6–9 stappen met valkuilen en checks.\" },\n  { key: \"interview\",    hint: \"Interview-stijl met spreker A/B; afwisselend korte Q/A.\" },\n  { key: \"checklist\",    hint: \"Checklist 12–18 punten met korte toelichting.\" },\n  { key: \"vergelijking\", hint: \"Vergelijk 3–5 opties in tabel + bullets; keuzecriteria.\" },\n  { key: \"mini-gids\",    hint: \"Mini-gids voor doelgroep X: situaties, keuzes, materialen, planning.\" },\n];\n\n// FNV-1a 32-bit\nfunction hash32(str) {\n  let h = 0x811c9dc5 >>> 0;\n  for (let i = 0; i < str.length; i++) {\n    h ^= str.charCodeAt(i);\n    h = Math.imul(h, 0x01000193);\n  }\n  return h >>> 0;\n}\n\n// Haal een stabiele run_id op (uit Host & Dates of doorgestroomd in $json)\nconst runId =\n  $item(0).$node[\"Host & Dates (Function)\"]?.json?.run_id ??\n  $json.run_id ??\n  new Date().toISOString(); // veilige fallback\n\nconst h = hash32(String(runId));\nconst pick = modes[h % modes.length];\n\nreturn [{ json: { blogMode: pick.key, blogModeHint: pick.hint, seed: runId, hash: h } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1888,
+        1184
+      ],
+      "id": "5af355c5-4016-485b-ab0b-b21359223ffa",
+      "name": "Pick Blog Mode (Code)"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Normalize Allowed Links (Code) — robuuste versie (zonder new URL)\n * In:  items met { url: \"https://...\" } van Flatten Sitemap\n * Out: {\n *   allowed_internal_links_rel: string[],\n *   allowed_internal_links_abs: string[],\n *   allowed_internal_links:     string[],   // alias (compat)\n *   base_url:                   string\n * }\n */\n\n// 0) Verzamel kandidaten\nconst items = $input.all();\nconst sitemapUrls = items.map(i => i.json?.url).filter(Boolean);\n\n// Pick Focus (optioneel) — mag ontbreken zonder crash\nlet extra = [];\ntry {\n  const pf = $node[\"Pick Focus (Code)\"]?.json;\n  if (Array.isArray(pf?.allowedLinks)) extra = pf.allowedLinks;\n} catch { /* ignore */ }\n\nconst src = [...sitemapUrls, ...extra].filter(Boolean);\n\n// 1) Mini URL-parser (zonder global URL)\nfunction splitUrl(u) {\n  const s = String(u).trim();\n  const m = s.match(/^(https?:\\/\\/)([^/]+)(\\/.*)?$/i);\n  if (m) {\n    const origin = m[1] + m[2];                    // https://example.com\n    const host   = m[2].replace(/^www\\./i,\"\").toLowerCase();\n    const path   = (m[3] || \"/\").replace(/\\/+$/,\"\") || \"/\";\n    return { origin, host, path, isAbs: true };\n  }\n  if (s.startsWith(\"/\")) {\n    const path = s.replace(/\\/+$/,\"\") || \"/\";\n    return { origin: \"\", host: \"\", path, isAbs: false };\n  }\n  return { origin: \"\", host: \"\", path: \"\", isAbs: false };\n}\n\n// 2) Base origin/host bepalen\nfunction detectBaseOrigin(arr) {\n  for (const u of arr) {\n    const sp = splitUrl(u);\n    if (sp.isAbs && sp.origin) return sp.origin;\n  }\n  return \"https://www.partyatmyplace.nl\";\n}\nconst baseOrigin = detectBaseOrigin(src);\nconst baseHost   = splitUrl(baseOrigin).host;\n\n// 3) Helpers voor rel/abs\nfunction toRelAbs(u) {\n  const sp = splitUrl(u);\n  if (sp.isAbs) {\n    // externe host → skip (alleen onze site)\n    if (baseHost && sp.host !== baseHost) return null;\n    return { rel: sp.path, abs: baseOrigin + (sp.path === \"/\" ? \"\" : sp.path) };\n  }\n  if (sp.path) {\n    return { rel: sp.path, abs: baseOrigin + (sp.path === \"/\" ? \"\" : sp.path) };\n  }\n  return null;\n}\n\n// 4) Filters\nconst BLOCK = [\n  /^\\/$/i,\n  /^\\/(checkout|order|paypal|pay|cart|bedankt)(\\/|$)/i,\n  /^\\/author\\//i,\n  /\\.(png|jpe?g|gif|svg|pdf|webp|zip)$/i\n];\n\n// Minder streng toelaten; daarna sorteren we relevant\nconst ALLOW_PREFIX = [\n  /^\\/post\\//, /^\\/lokale-pagina\\//, /^\\/silent-disco/,\n  /^\\/over-ons(\\/|$)/, /^\\/blog(\\/|$)/, /^\\/handleiding-veelgestelde-vragen(\\/|$)/,\n  /^\\/direct-bestellen(\\/|$)/, /^\\/consumenten(\\/|$)/, /^\\/silent-disco-zakelijk(\\/|$)/,\n  /^\\/speciale-evenementen(\\/|$)/, /^\\/cafes-en-bars(\\/|$)/, /^\\/festivals(\\/|$)/,\n  /^\\/dorpsfeesten-en-kermissen(\\/|$)/,\n  // extra's die ik in je sitemap zag:\n  /^\\/werken-bij(\\/|$)/, /^\\/offerte-aanvragen(\\/|$)/, /^\\/zalencentra-en-discotheken(\\/|$)/\n];\n\n// 5) Normaliseren → filteren → dedup\nconst relSet = new Set();\nconst absSet = new Set();\n\nfor (const u of src) {\n  const ra = toRelAbs(u);\n  if (!ra) continue;\n  const rel = ra.rel;\n  if (!rel) continue;\n\n  if (BLOCK.some(rx => rx.test(rel))) continue;\n  if (!ALLOW_PREFIX.some(rx => rx.test(rel))) continue;\n\n  relSet.add(rel);\n  absSet.add(ra.abs);\n}\n\n// 6) Sorteren (blogs → lokale pagina's → rest)\nfunction rank(p) {\n  if (/^\\/post\\//.test(p)) return 3;\n  if (/^\\/lokale-pagina\\//.test(p)) return 2;\n  return 1;\n}\nconst rel = Array.from(relSet).sort((a,b)=> rank(b) - rank(a));\nconst abs = rel.map(p => baseOrigin + (p === \"/\" ? \"\" : p));\n\n// 7) Output\nreturn [{\n  json: {\n    allowed_internal_links_rel: rel,\n    allowed_internal_links_abs: abs,\n    allowed_internal_links: rel,     // alias voor nodes die nog oude key lezen\n    base_url: baseOrigin\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1216,
+        1568
+      ],
+      "id": "7fc66177-8e88-4cc6-9bee-81dcf12b80b8",
+      "name": "Normalize Allowed Links (Code)"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 4,
+        "options": {
+          "clashHandling": {
+            "values": {
+              "resolveClash": "addSuffix"
+            }
+          },
+          "includeUnpaired": true
+        }
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2480,
+        1104
+      ],
+      "id": "52d21a23-bbae-4a43-b66d-92030547337a",
+      "name": "Merge vorige 4 (BLOG)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build Link Index (Function) — FIXED node reference\nfunction lastSlug(path) { return (path || \"\").split(\"/\").filter(Boolean).pop() || \"\"; }\n\nconst whitelist = $node[\"Normalize Allowed Links (Code)\"]?.json?.allowed_internal_links || [];\n// ⬇︎ let op: juiste node-naam:\nconst corpus    = $node[\"Corpus Flatten (Blog+LP)\"]?.json?.corpus || [];\n\nconst titleBySlug = new Map();\nfor (const it of (Array.isArray(corpus) ? corpus : [])) {\n  if (it?.slug) titleBySlug.set(String(it.slug), it.title || it.name || it.slug);\n}\n\nconst index = [];\nfor (const path of whitelist) {\n  const slug  = lastSlug(path);\n  const title = titleBySlug.get(slug) || slug.replace(/-/g, \" \");\n  const kind  = path.startsWith(\"/post/\") ? \"blog\"\n              : path.startsWith(\"/lokale-pagina/\") ? \"lp\"\n              : \"page\";\n  index.push({ path, slug, title, kind });\n}\n\nreturn [{ json: { link_index: index } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        1552
+      ],
+      "id": "5ca504c3-fc08-4477-96c6-7a67cc6574e4",
+      "name": "Build Link Index (Function)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Rank Internal Links (Function) (BLOG) — VOLLEDIG VERVANGEN\n// Verwacht: complete blog JSON binnen $json (na Parse BLOG JSON (Code))\n// Doel: ranked_internal_links toevoegen, NIET de rest weggooien\n\nfunction tok(s=\"\"){\n  return String(s).toLowerCase()\n    .replace(/<[^>]+>/g,\" \")\n    .replace(/[^\\p{L}\\p{N}]+/gu,\" \")\n    .split(/\\s+/).filter(w => w.length>2);\n}\nfunction jaccard(a,b){ const A=new Set(a),B=new Set(b); const i=[...A].filter(x=>B.has(x)).length; const u=new Set([...A,...B]).size||1; return i/u; }\n\nconst blog = { ...$json };\nconst linkIndex = $node[\"Build Link Index (Function)\"]?.json?.link_index || [];\n\nconst currentSlug = blog.slug || \"\";\nconst textTokens = tok(blog.title + \" \" + (blog[\"post-body\"]||\"\")\n  .match(/<h2[^>]*>(.*?)<\\/h2>/gis)?.join(\" \") || \"\");\n\nlet scored = linkIndex\n  .filter(l => l.slug && l.slug !== currentSlug)\n  .map(l => ({ path: l.path, score: jaccard(textTokens, tok(l.title||l.slug)) }))\n  .sort((a,b) => b.score - a.score);\n\n// Rotatie (optioneel, als je die in deze node wil bijhouden)\nconst wf = $getWorkflowStaticData('global');\nwf._recentLinks = Array.isArray(wf._recentLinks) ? wf._recentLinks : [];\n\nconst notRecent = scored.filter(x => !wf._recentLinks.includes(x.path));\nconst pick = (notRecent[0]?.path ? [notRecent[0].path] : [])\n  .concat(scored.map(x=>x.path))\n  .filter((p,i,arr)=>arr.indexOf(p)===i)\n  .slice(0,2);\n\nwf._recentLinks = pick.concat(wf._recentLinks).slice(0,20);\n\n// >>> BELANGRIJK: voeg toe i.p.v. vervangen\nblog.ranked_internal_links = pick;\n\nreturn [{ json: blog }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3392,
+        1136
+      ],
+      "id": "ba1a7713-115c-4ec9-9091-3e6a5a158f1a",
+      "name": "Rank Internal Links (Function) (BLOG)"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1392,
+        1552
+      ],
+      "id": "741f0b2b-f10b-4d55-a638-4ef6ab144741",
+      "name": "Gate Link Index (MERGE)"
+    },
+    {
+      "parameters": {
+        "content": "### BLOG Generation\nPrompt → Generate → Parse → Guards → Inject → Validate → Hash → Dedup → Webflow.",
+        "height": 640,
+        "width": 3168,
+        "color": 3
+      },
+      "id": "b708a172-27eb-453f-a9f3-69221f751ece",
+      "name": "Sticky: LP Generation1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2656,
+        736
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1776,
+        1616
+      ],
+      "id": "555d8438-73de-4c6e-9bb6-e5ddb020254d",
+      "name": "Merge Build Link en Content Hash"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Rank Internal Links (Function) (LP)\nfunction tok(s=\"\"){return String(s).toLowerCase()\n  .replace(/<[^>]+>/g,\" \").replace(/[^\\p{L}\\p{N}]+/gu,\" \")\n  .split(/\\s+/).filter(w=>w.length>2);}\nfunction jacc(a,b){const A=new Set(a),B=new Set(b);let i=0;for(const x of A) if(B.has(x)) i++;const u=A.size+B.size-i;return u? i/u:0;}\n\nconst v = {...$json};\nconst linkIndex = $node[\"Build Link Index (Function)\"]?.json?.link_index || [];\nconst selfSlug = String(v.slug||\"\").replace(/^\\/|\\/$/g,\"\");\nconst text = [v.name, v[\"post-summary\"], v[\"subtext-1\"], v[\"subtext-2\"], v[\"subtext-3\"], v[\"subtext-4\"]]\n  .filter(Boolean).join(\" \");\nconst T = tok(text);\n\nconst ranked = linkIndex\n  .filter(it => it.slug && it.slug !== selfSlug)\n  .map(it => ({ path: it.path, label: it.title, kind: it.kind, score: Number(jacc(T, tok(it.title)).toFixed(4)) }))\n  .sort((a,b)=> b.score - a.score)\n  .slice(0,5);\n\nreturn [{ json: { ...v, ranked_internal_links: ranked } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3392,
+        1504
+      ],
+      "id": "a2580f35-6f4d-49b7-a09d-a972d52d8ae6",
+      "name": "Rank Internal Links (Function) (LP)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Body-overlap guard (LP)\nfunction strip(s){return String(s||\"\").replace(/<[^>]*>/g,\" \").replace(/\\s+/g,\" \").trim();}\nfunction shingles(s,k=5){const t=String(s||\"\");const out=new Set();for(let i=0;i<=Math.max(0,t.length-k);i++) out.add(t.slice(i,i+k));return out;}\nfunction jacc(A,B){let i=0;for(const x of A) if(B.has(x)) i++;const u=A.size+B.size-i;return u? i/u:0;}\n\nconst cand = strip([$json[\"subtext-1\"],$json[\"subtext-2\"],$json[\"subtext-3\"],$json[\"subtext-4\"],$json[\"post-body\"]].join(\" \"));\nconst samples = ($node[\"Content Hash Corpus (Function)\"]?.json?._sampleBodies || []).map(strip);\nconst S = shingles(cand,5);\nconst scored = samples.map((b,i)=>({idx:i, sim:Number(jacc(S, shingles(b,5)).toFixed(4))})).sort((a,b)=> b.sim-a.sim);\nconst top3 = scored.slice(0,3);\nreturn [{ json: { ...$json, _bodySimMax: top3[0]?.sim ?? 0, _closest: top3 } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5328,
+        1504
+      ],
+      "id": "4f95b022-b8fd-4ad9-862a-181602b83aaa",
+      "name": "Body-overlap guard (LP)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Add to Rejects (LP) — houdt afgekeurde LP-slugs/titels bij\nconst wf = $getWorkflowStaticData('global');\nwf.rejectedSlugsLP = Array.isArray(wf.rejectedSlugsLP) ? wf.rejectedSlugsLP : [];\n\nconst cur = String($json.slug || $json.name || '').trim();\nconst out = Array.from(new Set([...wf.rejectedSlugsLP, cur].filter(Boolean)));\n\nwf.rejectedSlugsLP = out;\nreturn [{ json: { rejectedSlugsLP: out } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4176,
+        1952
+      ],
+      "id": "97a841e9-45aa-4622-b330-ed23a8b563f1",
+      "name": "Add to Rejects (LP)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sanitize LP HTML (Code) — maakt subtext/post-body Webflow-proof\nconst v = { ...$json };\n\nconst base = $node[\"Normalize Allowed Links (Code)\"]?.json?.base_url\n          || \"https://www.partyatmyplace.nl\";\n\nfunction sanitize(html) {\n  let body = String(html || \"\");\n\n  // 1) whitespace/entiteiten\n  body = body.replace(/&nbsp;/gi, \" \")\n             .replace(/[\\u200B\\u200C\\u200D\\u00A0\\u2028\\u2029]/g, \" \");\n\n  // 2) verwijder inline styles en on* handlers\n  body = body.replace(/\\sstyle=\"[^\"]*\"/gi, \"\")\n             .replace(/\\son[a-z]+\\s*=\\s*\"[^\"]*\"/gi, \"\")\n             .replace(/\\son[a-z]+\\s*=\\s*'[^']*'/gi, \"\");\n\n  // 3) <br> normaliseren\n  body = body.replace(/\\s*<br\\s*\\/?>\\s*/gi, \"\\n\");\n\n  // 4) unwrap <ul>/<ol> uit <p>\n  body = body.replace(/<p>\\s*(<(?:ul|ol)\\b[^>]*>)/gi, \"$1\")\n             .replace(/(<\\/(?:ul|ol)>)\\s*<\\/p>/gi, \"$1\");\n\n  // 5) relatieve links → absolute (optioneel)\n  body = body.replace(/<a\\s+([^>]*?)href=\"([^\"]+)\"([^>]*)>/gi, (_, pre, href, post) => {\n    const abs = href.startsWith(\"/\") ? (base.replace(/\\/+$/,\"\") + href) : href;\n    return `<a ${pre}href=\"${abs}\"${post}>`;\n  });\n\n  // 6) img cleanup: alleen src/alt whitelisten (rudimentair)\n  body = body.replace(/<img[^>]*>/gi, (tag) => {\n    const src = (tag.match(/src=\"([^\"]+)\"/i)||[])[1] || \"\";\n    const alt = (tag.match(/alt=\"([^\"]*)\"/i)||[])[1] || \"\";\n    return src ? `<img src=\"${src}\" alt=\"${alt}\"/>` : \"\";\n  });\n\n  // 7) tag-whitelist (laat h2,h3,p,ul,ol,li,a,figure,img,strong,em staan)\n  body = body.replace(/<(?!\\/?(h2|h3|p|ul|ol|li|a|figure|img|strong|em)\\b)[^>]*>/gi, \"\");\n\n  // 8) opschonen\n  body = body.replace(/\\n{3,}/g, \"\\n\\n\")\n             .replace(/[ \\t]{2,}/g, \" \")\n             .trim();\n\n  return body;\n}\n\n// Sanitize alle LP-HTMLvelden\nv[\"post-body\"]    = sanitize(v[\"post-body\"]);\nv[\"subtext-1\"]    = sanitize(v[\"subtext-1\"]);\nv[\"subtext-2\"]    = sanitize(v[\"subtext-2\"]);\nv[\"subtext-3\"]    = sanitize(v[\"subtext-3\"]);\nv[\"subtext-4\"]    = sanitize(v[\"subtext-4\"]);\n\nreturn [{ json: v }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4864,
+        1504
+      ],
+      "id": "05ddaa59-5b7d-4be4-a85c-9933133ad96c",
+      "name": "Sanitize LP HTML (Code)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const wf = $getWorkflowStaticData('global');\nwf.rejectedSlugsLP = Array.isArray(wf.rejectedSlugsLP) ? wf.rejectedSlugsLP : [];\n\n// neem slug of name van de kandidaat mee als ‘reject’\nconst fromIf = $json?.slug ? [$json.slug] : ($json?.name ? [$json.name] : []);\nconst merged = Array.from(new Set([...wf.rejectedSlugsLP, ...fromIf]));\n\n// bewaar\nwf.rejectedSlugsLP = merged;\n\n// optioneel: ‘closest’ van Body-overlap guard (LP) meegeven\nconst closest = Array.isArray($json._closest) ? $json._closest : [];\n\nreturn [{ json: { rejectedSlugsLP: merged, closest } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1648,
+        2000
+      ],
+      "id": "7349cda0-9821-4bd3-99e7-3295c5f55f76",
+      "name": "Reject State (LP)"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 4,
+        "options": {
+          "clashHandling": {
+            "values": {
+              "resolveClash": "addSuffix"
+            }
+          },
+          "includeUnpaired": true
+        }
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2480,
+        1472
+      ],
+      "id": "22ec45c0-883f-49c5-826f-a065ff8050d3",
+      "name": "Merge vorige 4 (LP)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pick LP Mode (Code) — per attempt, 80% stad, corpus+drafts aware, geen dubbele stad\n// Verbind: Gate Create Ready (Merge) -> deze node -> Build Prompt LP (Function)\n\n// ---------- helpers ----------\nfunction readNode(name, path, fallback) {\n  try {\n    const ref = $node[name];\n    if (!ref || typeof ref.json === \"undefined\") return fallback;\n    const j = ref.json;\n    return path ? (j?.[path] ?? fallback) : (j ?? fallback);\n  } catch { return fallback; }\n}\nfunction hash32(str) {\n  let h = 0x811c9dc5 >>> 0;\n  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); }\n  return h >>> 0;\n}\nfunction lastSeg(s){\n  const t = String(s||\"\").split(\"?\")[0].split(\"#\")[0];\n  const parts = t.split(\"/\").filter(Boolean);\n  return parts[parts.length-1] || \"\";\n}\nfunction toKebab(s) {\n  return String(s || \"\")\n    .normalize(\"NFKD\").replace(/[’']/g,\"\")\n    .replace(/[^a-zA-Z0-9\\s-]/g,\" \")\n    .trim().toLowerCase().replace(/\\s+/g,\"-\").replace(/-+/g,\"-\").replace(/^-|-$/g,\"\");\n}\n\n// ---------- inputs ----------\nconst brief     = readNode(\"Build Brief (Function)\", \"brief\", {}) || {};\nconst linkIndex = readNode(\"Build Link Index (Function)\", \"link_index\", []) || [];\nconst gscQ      = readNode(\"GSC queries (Search Analytics)\", \"rows\", []) || [];\nconst gscP      = readNode(\"GSC pages (Search Analytics)\", \"rows\", []) || [];\nconst allowed   = readNode(\"Normalize Allowed Links (Code)\", \"allowed_internal_links_rel\", []) || [];\nconst corpus    = readNode(\"Content Hash Corpus (Function)\", null, {}) || {};\nconst rejects   = readNode(\"Reject State (LP)\", \"rejectedSlugsLP\", []) || [];\n\n// ---------- run/attempt ----------\nconst runId =\n  $item(0).$node?.[\"Host & Dates (Function)\"]?.json?.run_id ??\n  $json.run_id ?? new Date().toISOString();\n\nconst wf = $getWorkflowStaticData(\"global\");\nif (wf._lpRunId !== runId) { wf._lpRunId = runId; wf._lpAttempt = 0; wf._lpCitiesSeen = []; }\nwf._lpAttempt = (wf._lpAttempt || 0) + 1;\n\n// ---------- city list & regex ----------\nconst CITY_LIST = [\n  \"arnhem\",\"amsterdam\",\"rotterdam\",\"utrecht\",\"eindhoven\",\"groningen\",\"tilburg\",\"nijmegen\",\n  \"haarlem\",\"breda\",\"dordrecht\",\"zwolle\",\"enschede\",\"maastricht\",\"den haag\",\"s gravenhage\",\n  \"s-hertogenbosch\",\"den bosch\",\"leeuwarden\",\"alkmaar\",\"apeldoorn\",\"ijmuiden\",\"amersfoort\",\n  \"zutphen\",\"middelburg\",\"venlo\",\"ede\",\"deventer\",\"helmond\",\"almere\"\n];\nconst CITY_RX = new RegExp(\n  \"\\\\b(\" + CITY_LIST.map(c =>\n    c.replace(/[.*+?^${}()|[\\]\\\\]/g,\"\\\\$&\").replace(/\\s+/g,\"\\\\s*\")\n  ).join(\"|\") + \")\\\\b\",\"gi\"\n);\n\n// ---------- prefix detectie ----------\nfunction detectLpPrefix() {\n  const counts = new Map();\n  const allSegs = [];\n\n  for (const it of (linkIndex||[])) {\n    const seg = lastSeg(String(it.slug || it.path || \"\").toLowerCase());\n    if (seg) allSegs.push(seg);\n  }\n  for (const r of (gscP||[])) {\n    const seg = lastSeg(String(r.keys?.[0] ?? \"\").toLowerCase());\n    if (seg) allSegs.push(seg);\n  }\n  // tel prefixen op basis van \"-<city>\" suffix\n  for (const seg of allSegs) {\n    for (const city of CITY_LIST) {\n      const cs = \"-\" + toKebab(city);\n      if (seg.endsWith(cs)) {\n        const pref = seg.slice(0, -cs.length).replace(/-+$/,\"\");\n        if (pref) counts.set(pref, (counts.get(pref)||0) + 1);\n      }\n    }\n  }\n  let best = \"\", bestN = 0;\n  for (const [k,v] of counts.entries()) if (v > bestN) { best = k; bestN = v; }\n  return best; // kan \"\" zijn\n}\nconst detectedPrefix = detectLpPrefix();\nconst FALLBACK_PREFIX =\n  (brief.lpSlugPrefix && String(brief.lpSlugPrefix).trim())\n  || (brief.slugPrefixLP && String(brief.slugPrefixLP).trim())\n  || detectedPrefix || \"silent-disco-huren\";\nfunction cityToSlug(c){ return `${FALLBACK_PREFIX}-${toKebab(c)}`.replace(/--+/g,\"-\"); }\nconst pageCityRx = new RegExp(`${FALLBACK_PREFIX.replace(/[-/\\\\^$*+?.()|[\\\\]{}]/g,\"\\\\$&\")}-([a-z\\\\-]+)$`, \"i\");\n\n// ---------- existing & rejected ----------\nconst whitelistSlugs = new Set(\n  (linkIndex || []).map(x => String(x.slug || lastSeg(x.path) || \"\").toLowerCase())\n);\nconst corpusSlugs = new Set(\n  (Array.isArray(corpus._corpusBySlug) ? corpus._corpusBySlug : []).map(s => String(s).toLowerCase())\n);\nconst rejectedSlugs = new Set((Array.isArray(rejects) ? rejects : []).map(s => String(s).toLowerCase()));\nfunction slugExists(slug) {\n  const s = String(slug).toLowerCase();\n  return whitelistSlugs.has(s) || corpusSlugs.has(s) || rejectedSlugs.has(s);\n}\n\n// ---------- keyword-rotatie ----------\nconst seed = Array.isArray(brief.seedQueries) ? brief.seedQueries.slice() : [];\nconst gscSeed = gscQ\n  .map(r => String(r.keys?.[0] ?? \"\"))\n  .filter(s => /silent\\s+disco/i.test(s))\n  .map(s => s.replace(CITY_RX, \"\").replace(/\\s{2,}/g,\" \").trim())\n  .filter(Boolean);\nlet kwPool = Array.from(new Set(seed.concat(gscSeed).map(s => s.toLowerCase().trim()))).filter(Boolean);\nif (kwPool.length === 0) kwPool = [\"silent disco huren\",\"silent disco verhuur\"];\nconst kwIdx = (hash32(`${runId}|kw`) + (wf._lpAttempt - 1)) % kwPool.length;\nconst primary_query = kwPool[kwIdx];\n\n// ---------- wil je een stad? (per attempt) ----------\nconst CITY_WEIGHT = (typeof wf._LP_CITY_WEIGHT === \"number\") ? wf._LP_CITY_WEIGHT : 0.8;\nconst roll = (hash32(`${runId}|city-roll|${wf._lpAttempt}`) % 10000) / 10000;\nconst wantCity = roll < CITY_WEIGHT;\n\n// ---------- GSC-kandidaten ----------\nfunction getCityCandidates() {\n  const fromQueries = gscQ.flatMap(r => {\n    const k = String(r.keys?.[0] ?? \"\");\n    const found = k.match(CITY_RX) || [];\n    return found.map(x => ({\n      city: x.toLowerCase(),\n      clicks: r.clicks || 0,\n      imp: r.impressions || 0,\n      ctr: r.ctr || 0\n    }));\n  });\n  const fromPages = gscP.flatMap(r => {\n    const url = String(r.keys?.[0] ?? \"\");\n    const seg = lastSeg(url);\n    const m = seg.match(pageCityRx);\n    return m ? [{ city: m[1].toLowerCase(), clicks: r.clicks||0, imp: r.impressions||0, ctr: r.ctr||0 }] : [];\n  });\n  return fromQueries.concat(fromPages);\n}\nconst rawCities = getCityCandidates();\n\n// score (score mag 0 zijn), markeer of slug al bestaat\nconst scoredMap = new Map();\nfor (const r of rawCities) {\n  const key = toKebab(r.city);\n  const prev = scoredMap.get(key) || { city: key, score: 0 };\n  prev.score += (r.clicks*3) + (r.imp*0.1) + (r.ctr*10);\n  scoredMap.set(key, prev);\n}\nlet rankedCities = Array.from(scoredMap.values())\n  .map(o => {\n    const slug = cityToSlug(o.city);\n    const exists = slugExists(slug);\n    return { ...o, slug, exists };\n  })\n  .sort((a,b) => (b.score - (b.exists?50:0)) - (a.score - (a.exists?50:0)));\n\n// ---------- kies stad (GSC -> backfill -> niks) ----------\nconst seen = new Set(Array.isArray(wf._lpCitiesSeen) ? wf._lpCitiesSeen : []);\nlet location = \"\";\n\n// 1) GSC-gedreven: eerste NIET-bestaande en NIET-gezien\nif (wantCity && rankedCities.length) {\n  const startIdx = hash32(`${runId}|which-city|${wf._lpAttempt}`) % rankedCities.length;\n  for (let i = 0; i < rankedCities.length; i++) {\n    const c = rankedCities[(startIdx + i) % rankedCities.length];\n    if (!c.exists && !seen.has(c.city)) { location = c.city; break; }\n  }\n}\n\n// 2) Backfill: neem eerste city uit CITY_LIST die nog niet bestaat of gezien is\nif (wantCity && !location) {\n  const start = hash32(`${runId}|backfill-city|${wf._lpAttempt}`) % CITY_LIST.length;\n  for (let i = 0; i < CITY_LIST.length; i++) {\n    const city = toKebab(CITY_LIST[(start + i) % CITY_LIST.length]);\n    const slug = cityToSlug(city);\n    if (!slugExists(slug) && !seen.has(city)) { location = city; break; }\n  }\n}\n\n// 3) Als we er één kozen: registreer voor deze run\nif (location) {\n  wf._lpCitiesSeen = Array.isArray(wf._lpCitiesSeen) ? wf._lpCitiesSeen : [];\n  wf._lpCitiesSeen.push(location);\n}\n\n// ---------- output ----------\nconst lpMode = location ? \"city\" : (wantCity ? \"city-fallback-generic\" : \"generic\");\nconst lpModeHint = location\n  ? \"Plaatsnaam-LP o.b.v. GSC/backfill (deterministisch per attempt).\"\n  : (wantCity ? \"Stad gewenst maar geen veilige kandidaat -> generiek.\" : \"Expliciet generiek.\");\n\nreturn [{\n  json: {\n    run_id: runId,\n    attempt: wf._lpAttempt,\n    lpMode,\n    lpModeHint,\n    primary_query,\n    location,                     // \"\" => generiek\n    use_location: Boolean(location),\n    allowedLinks: allowed,\n    lpSlugPrefix: FALLBACK_PREFIX // detecteerde of fallback prefix\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        1696
+      ],
+      "id": "90bb4c87-c2c1-4966-9c97-9096792f3bba",
+      "name": "Pick LP Mode (Code)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// prefix & slug uit onze eigen user-payload/parse\nconst user = $node[\"Build Prompt LP (Function)\"]?.json?.user || {};\nconst prefix = String(user.lpSlugPrefix || \"silent-disco-huren\");\nconst rx = new RegExp(\"^\" + prefix.replace(/[-/\\\\^$*+?.()|[\\\\]{}]/g,\"\\\\$&\") + \"-([a-z0-9-]+)$\");\nconst m  = String($json.slug || \"\").toLowerCase().match(rx);\nconst city = m ? m[1] : \"\";\n\n// bestaande steden uit héél corpus\nconst corpus = $node[\"Content Hash Corpus (Function)\"]?.json?._corpusBySlug || [];\nconst existingCities = new Set(\n  corpus.map(s => (String(s).toLowerCase().match(rx) || [])[1]).filter(Boolean)\n);\n\n// ook binnen dezelfde run geen dubbelingen\nconst wf = $getWorkflowStaticData('global');\nwf._lpCitiesSeen = Array.isArray(wf._lpCitiesSeen) ? wf._lpCitiesSeen : [];\nconst seen = new Set(wf._lpCitiesSeen);\n\nconst allowed = city && !existingCities.has(city) && !seen.has(city);\nif (allowed) wf._lpCitiesSeen.push(city);\n\nreturn [{ json: { ...$json, _city: city, _city_ok: !!allowed } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3600,
+        1504
+      ],
+      "id": "7671272c-0cdb-4b35-83be-1a61916b0c18",
+      "name": "City Uniqueness Guard (LP)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3dcd867c-a51a-46a3-bf6c-4647aee9169f",
+              "leftValue": "={{ $json._city_ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3808,
+        1504
+      ],
+      "id": "4abf827c-83b2-4585-be56-558acd64e723",
+      "name": "City OK? (IF)"
+    }
+  ],
+  "pinData": {
+    "When clicking ‘Execute workflow’": [
+      {
+        "json": {}
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Init",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init": {
+      "main": [
+        [
+          {
+            "node": "Host & Dates (Function)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Host & Dates (Function)": {
+      "main": [
+        [
+          {
+            "node": "Webflow Get Collection (Blog)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Webflow Get Collection (LP)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET sitemap.xml",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GSC pages (Search Analytics)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google CSE (site: generic)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GSC queries (Search Analytics)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webflow Get Collection (Blog)": {
+      "main": [
+        [
+          {
+            "node": "Webflow List Items (Blog, sample)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gate Webflow Context Ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webflow Get Collection (LP)": {
+      "main": [
+        [
+          {
+            "node": "Webflow List Items (LP, sample)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gate Webflow Context Ready",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "GET sitemap.xml": {
+      "main": [
+        [
+          {
+            "node": "XML → JSON (Sitemap)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GSC pages (Search Analytics)": {
+      "main": [
+        [
+          {
+            "node": "GSC pages — Split rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google CSE (site: generic)": {
+      "main": [
+        [
+          {
+            "node": "Gate Link Pool Ready",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "GSC queries (Search Analytics)": {
+      "main": [
+        [
+          {
+            "node": "GSC queries — Split rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webflow List Items (Blog, sample)": {
+      "main": [
+        [
+          {
+            "node": "Gate Webflow Context Ready",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Webflow List Items (LP, sample)": {
+      "main": [
+        [
+          {
+            "node": "Gate Webflow Context Ready",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Flatten Sitemap": {
+      "main": [
+        [
+          {
+            "node": "Gate Link Pool Ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "XML → JSON (Sitemap)": {
+      "main": [
+        [
+          {
+            "node": "Flatten Sitemap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gate Webflow Context Ready": {
+      "main": [
+        [
+          {
+            "node": "Final Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gate Link Pool Ready": {
+      "main": [
+        [
+          {
+            "node": "Final Gate",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Final Gate": {
+      "main": [
+        [
+          {
+            "node": "Build Brief (Function)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "BLOG Loop Seed (Function)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "LP Loop Seed (Function)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reject State (BLOG)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reject State (LP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GSC pages — Split rows": {
+      "main": [
+        [
+          {
+            "node": "Gate Link Pool Ready",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "GSC queries — Split rows": {
+      "main": [
+        [
+          {
+            "node": "Final Gate",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Build Brief (Function)": {
+      "main": [
+        [
+          {
+            "node": "Gate Create Ready (Merge)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Pick Focus (Code)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webflow List Items (BLOG) — HTTP": {
+      "main": [
+        [
+          {
+            "node": "BLOG Page Stats (Code)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BLOG Loop Seed (Function)": {
+      "main": [
+        [
+          {
+            "node": "Webflow List Items (BLOG) — HTTP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BLOG Page Stats (Code)": {
+      "main": [
+        [
+          {
+            "node": "IF BLOG has more?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF BLOG has more?": {
+      "main": [
+        [
+          {
+            "node": "Set: BLOG Pager Next",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "BLOG Corpus (Collect)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set: BLOG Pager Next": {
+      "main": [
+        [
+          {
+            "node": "Webflow List Items (BLOG) — HTTP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BLOG Corpus (Collect)": {
+      "main": [
+        [
+          {
+            "node": "Collect Existing Titles (BLOG)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gate Corpus Ready (Merge)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Corpus Flatten (Blog+LP)": {
+      "main": [
+        [
+          {
+            "node": "Content Hash Corpus (Function)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gate Link Index (MERGE)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LP Loop Seed (Function)": {
+      "main": [
+        [
+          {
+            "node": "Webflow List Items (LP) — HTTP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webflow List Items (LP) — HTTP": {
+      "main": [
+        [
+          {
+            "node": "LP Page Stats (Code)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LP Page Stats (Code)": {
+      "main": [
+        [
+          {
+            "node": "IF LP has more?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF LP has more?": {
+      "main": [
+        [
+          {
+            "node": "Set: LP Pager Next",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "LP Corpus (Collect)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set: LP Pager Next": {
+      "main": [
+        [
+          {
+            "node": "Webflow List Items (LP) — HTTP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LP Corpus (Collect)": {
+      "main": [
+        [
+          {
+            "node": "Gate Corpus Ready (Merge)",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Collect Existing Titles (LP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gate Corpus Ready (Merge)": {
+      "main": [
+        [
+          {
+            "node": "Corpus Flatten (Blog+LP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content Hash Corpus (Function)": {
+      "main": [
+        [
+          {
+            "node": "Report Corpus (Code)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gate Create Ready (Merge)",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Pick Blog Mode (Code)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge Build Link en Content Hash",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gate Create Ready (Merge)": {
+      "main": [
+        [
+          {
+            "node": "Merge vorige 4 (BLOG)",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Merge vorige 4 (LP)",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Build Prompt BLOG (Function)": {
+      "main": [
+        [
+          {
+            "node": "Generate BLOG (HTTP) — OpenRouter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate BLOG (HTTP) — OpenRouter": {
+      "main": [
+        [
+          {
+            "node": "Parse BLOG JSON (Code)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse BLOG JSON (Code)": {
+      "main": [
+        [
+          {
+            "node": "Rank Internal Links (Function) (BLOG)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate BLOG (Code)": {
+      "main": [
+        [
+          {
+            "node": "Body-overlap guard (Code)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hash BLOG (Function)": {
+      "main": [
+        [
+          {
+            "node": "Dedup BLOG (IF)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedup BLOG (IF)": {
+      "main": [
+        [
+          {
+            "node": "Webflow Create Draft BLOG (HTTP)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add to Rejects (BLOG)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt LP (Function)": {
+      "main": [
+        [
+          {
+            "node": "Generate LP (HTTP) — OpenRouter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate LP (HTTP) — OpenRouter": {
+      "main": [
+        [
+          {
+            "node": "Parse LP JSON (Code)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LP JSON (Code)": {
+      "main": [
+        [
+          {
+            "node": "Rank Internal Links (Function) (LP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score Title Similarity (Function) — voor LP-namen": {
+      "main": [
+        [
+          {
+            "node": "Title Unique Enough (LP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score Title Similarity (Function) — voor BLOG-namen": {
+      "main": [
+        [
+          {
+            "node": "Title Unique Enough (BLOG)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Existing Titles (LP)": {
+      "main": [
+        [
+          {
+            "node": "Merge vorige 4 (LP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Existing Titles (BLOG)": {
+      "main": [
+        [
+          {
+            "node": "Merge vorige 4 (BLOG)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Title Unique Enough (BLOG)": {
+      "main": [
+        [
+          {
+            "node": "Enforce & Inject Links (Function) (BLOG)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add to Rejects (BLOG)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Title Unique Enough (LP)": {
+      "main": [
+        [
+          {
+            "node": "Enforce & Inject Links (Function) (LP)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add to Rejects (LP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enforce & Inject Links (Function) (LP)": {
+      "main": [
+        [
+          {
+            "node": "Sanitize LP HTML (Code)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enforce & Inject Links (Function) (BLOG)": {
+      "main": [
+        [
+          {
+            "node": "Sanitize BLOG HTML (Code)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate LP (Code)": {
+      "main": [
+        [
+          {
+            "node": "Body-overlap guard (LP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hash LP (Function)": {
+      "main": [
+        [
+          {
+            "node": "Dedup LP (IF)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Focus (Code)": {
+      "main": [
+        [
+          {
+            "node": "Gate Create Ready (Merge)",
+            "type": "main",
+            "index": 2
+          },
+          {
+            "node": "Normalize Allowed Links (Code)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Body-overlap guard (Code)": {
+      "main": [
+        [
+          {
+            "node": "Hash BLOG (Function)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedup LP (IF)": {
+      "main": [
+        [
+          {
+            "node": "Webflow Create Draft LP (HTTP)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add to Rejects (LP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get an execution": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to Rejects (BLOG)": {
+      "main": [
+        [
+          {
+            "node": "Reject State (BLOG)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sanitize BLOG HTML (Code)": {
+      "main": [
+        [
+          {
+            "node": "Validate BLOG (Code)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reject State (BLOG)": {
+      "main": [
+        [
+          {
+            "node": "Merge vorige 4 (BLOG)",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Pick Blog Mode (Code)": {
+      "main": [
+        [
+          {
+            "node": "Merge vorige 4 (BLOG)",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Normalize Allowed Links (Code)": {
+      "main": [
+        [
+          {
+            "node": "Gate Link Index (MERGE)",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge vorige 4 (BLOG)": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt BLOG (Function)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Link Index (Function)": {
+      "main": [
+        [
+          {
+            "node": "Gate Create Ready (Merge)",
+            "type": "main",
+            "index": 3
+          },
+          {
+            "node": "Merge Build Link en Content Hash",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Rank Internal Links (Function) (BLOG)": {
+      "main": [
+        [
+          {
+            "node": "Score Title Similarity (Function) — voor BLOG-namen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gate Link Index (MERGE)": {
+      "main": [
+        [
+          {
+            "node": "Build Link Index (Function)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Build Link en Content Hash": {
+      "main": [
+        [
+          {
+            "node": "Pick LP Mode (Code)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rank Internal Links (Function) (LP)": {
+      "main": [
+        [
+          {
+            "node": "City Uniqueness Guard (LP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Body-overlap guard (LP)": {
+      "main": [
+        [
+          {
+            "node": "Hash LP (Function)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sanitize LP HTML (Code)": {
+      "main": [
+        [
+          {
+            "node": "Validate LP (Code)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to Rejects (LP)": {
+      "main": [
+        [
+          {
+            "node": "Reject State (LP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge vorige 4 (LP)": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt LP (Function)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reject State (LP)": {
+      "main": [
+        [
+          {
+            "node": "Merge vorige 4 (LP)",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Pick LP Mode (Code)": {
+      "main": [
+        [
+          {
+            "node": "Merge vorige 4 (LP)",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "City Uniqueness Guard (LP)": {
+      "main": [
+        [
+          {
+            "node": "City OK? (IF)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "City OK? (IF)": {
+      "main": [
+        [
+          {
+            "node": "Score Title Similarity (Function) — voor LP-namen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add to Rejects (LP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8b534286-d196-4eb6-9b86-7bc71b1096fb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "08671fbdb82664be35888352443797583cd678a53e81be13048ee9ffa268dfd2"
+  },
+  "id": "a93JBKunKLp7dZEJ",
+  "tags": []
+}
